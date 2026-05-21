@@ -68,6 +68,9 @@ $revistas   = $pdo->query('
     JOIN usuarios u ON r.subida_por = u.id
     ORDER BY r.creado_en DESC
 ')->fetchAll(PDO::FETCH_ASSOC);
+
+// IDs que ya tienen versión en inglés
+$con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::FETCH_COLUMN);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -129,11 +132,13 @@ $revistas   = $pdo->query('
     .badge-pub { background: #EAF3DE; color: #3B6D11; }
     .badge-dra { background: #FEF9E7; color: #856d00; }
     .badge-arc { background: #f4f6fa; color: #888; }
+    .badge-en { background: #EBF3FB; color: #003B7A; font-size: 10px; padding: 2px 6px; border-radius: 20px; margin-left: 4px; }
     .card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
     .btn-xs { padding: 4px 9px; border-radius: 6px; font-size: 11px; cursor: pointer; border: 1px solid #e2e8f0; background: #fff; color: #333; text-decoration: none; }
     .btn-xs:hover { background: #f4f6fa; }
     .btn-xs.primary { background: #003B7A; color: #fff; border-color: #003B7A; }
     .btn-xs.primary:hover { background: #00306a; }
+    .btn-xs.gold { background: #F5C518; color: #003B7A; border-color: #F5C518; font-weight: 500; }
     .btn-xs.danger { border-color: #fca5a5; color: #b91c1c; }
     .btn-xs.danger:hover { background: #fee2e2; }
     .alert { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; border-left: 3px solid; }
@@ -152,6 +157,7 @@ $revistas   = $pdo->query('
   <div class="sb-section">Navegación</div>
   <a class="sb-link" href="dashboard.php"><i class="ti ti-home" aria-hidden="true"></i> Dashboard</a>
   <a class="sb-link active" href="revistas.php"><i class="ti ti-file-text" aria-hidden="true"></i> Revistas</a>
+  <a class="sb-link" href="revistas_en.php"><i class="ti ti-world" aria-hidden="true"></i> Versión inglés</a>
   <a class="sb-link" href="categorias.php"><i class="ti ti-tag" aria-hidden="true"></i> Categorías</a>
   <?php if ($_SESSION['rol'] === 'admin'): ?>
   <a class="sb-link" href="usuarios.php"><i class="ti ti-users" aria-hidden="true"></i> Usuarios</a>
@@ -191,6 +197,7 @@ $revistas   = $pdo->query('
     <div class="grid">
       <?php foreach ($revistas as $r):
         $badge = match($r['estado']) { 'publicada' => 'badge-pub', 'borrador' => 'badge-dra', default => 'badge-arc' };
+        $tiene_en = in_array($r['id'], $con_ingles);
       ?>
       <div class="card">
         <div class="card-img">
@@ -201,7 +208,12 @@ $revistas   = $pdo->query('
           <?php endif; ?>
         </div>
         <div class="card-body">
-          <div class="card-title"><?= htmlspecialchars($r['titulo']) ?></div>
+          <div class="card-title">
+            <?= htmlspecialchars($r['titulo']) ?>
+            <?php if ($tiene_en): ?>
+              <span class="badge-en">🇺🇸 EN</span>
+            <?php endif; ?>
+          </div>
           <div class="card-cat"><?= htmlspecialchars($r['categoria']) ?> · <?= htmlspecialchars($r['autor']) ?></div>
           <span class="badge <?= $badge ?>"><?= $r['estado'] ?></span>
           <div class="card-actions">
@@ -210,6 +222,9 @@ $revistas   = $pdo->query('
             <?php endif; ?>
             <?php if ($r['estado'] !== 'borrador'): ?>
               <a class="btn-xs" href="?id=<?= $r['id'] ?>&estado=borrador">Borrador</a>
+            <?php endif; ?>
+            <?php if (!$tiene_en): ?>
+              <a class="btn-xs gold" href="revistas_en.php">+ EN</a>
             <?php endif; ?>
             <?php if ($r['pdf_url']): ?>
               <a class="btn-xs" href="../<?= htmlspecialchars($r['pdf_url']) ?>" target="_blank">Ver PDF</a>

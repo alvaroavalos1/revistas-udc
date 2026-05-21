@@ -21,7 +21,6 @@ $total_categorias = $pdo->query('SELECT COUNT(*) FROM categorias')->fetchColumn(
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; background: #f4f6fa; display: flex; min-height: 100vh; }
-
     .sidebar { width: 220px; background: #003B7A; display: flex; flex-direction: column; flex-shrink: 0; min-height: 100vh; }
     .sb-logo { padding: 22px 18px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
     .sb-logo-brand { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
@@ -34,7 +33,6 @@ $total_categorias = $pdo->query('SELECT COUNT(*) FROM categorias')->fetchColumn(
     .sb-link.active { background: rgba(245,197,24,0.12); color: #F5C518; border-left-color: #F5C518; }
     .sb-link i { font-size: 17px; }
     .sb-bottom { margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding: 10px 0; }
-
     .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
     .topbar { background: #fff; border-bottom: 3px solid #F5C518; padding: 0 24px; height: 54px; display: flex; align-items: center; justify-content: space-between; }
     .topbar h1 { font-size: 16px; color: #003B7A; font-weight: 500; }
@@ -44,7 +42,6 @@ $total_categorias = $pdo->query('SELECT COUNT(*) FROM categorias')->fetchColumn(
     .user-info { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #555; }
     .avatar { width: 34px; height: 34px; border-radius: 50%; background: #003B7A; color: #F5C518; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
     .badge-rol { background: #FEF9E7; color: #003B7A; border: 1px solid #F5C518; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
-
     .content { padding: 24px; flex: 1; }
     .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
     .stat { background: #fff; border-radius: 12px; padding: 20px; border: 0.5px solid #e2e8f0; border-top: 3px solid #003B7A; }
@@ -54,11 +51,9 @@ $total_categorias = $pdo->query('SELECT COUNT(*) FROM categorias')->fetchColumn(
     .stat:nth-child(2) .stat-val { color: #856d00; }
     .stat:nth-child(3) { border-top-color: #e2e8f0; }
     .stat:nth-child(3) .stat-val { color: #888; }
-
     .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
     .section-bar { width: 3px; height: 20px; background: #F5C518; border-radius: 2px; }
     .section-title { font-size: 14px; font-weight: 500; color: #1a202c; }
-
     .tabla { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; border: 0.5px solid #e2e8f0; }
     .tabla th { background: #003B7A; color: rgba(255,255,255,0.8); padding: 11px 14px; text-align: left; font-size: 12px; font-weight: 500; }
     .tabla td { padding: 11px 14px; font-size: 13px; color: #333; border-bottom: 1px solid #f4f6fa; }
@@ -74,15 +69,13 @@ $total_categorias = $pdo->query('SELECT COUNT(*) FROM categorias')->fetchColumn(
 
 <div class="sidebar">
   <div class="sb-logo">
-    <div class="sb-logo-brand">
-      <div class="sb-dot"></div>
-      <h2>Revistas UDC</h2>
-    </div>
+    <div class="sb-logo-brand"><div class="sb-dot"></div><h2>Revistas UDC</h2></div>
     <p>Panel de administración</p>
   </div>
   <div class="sb-section">Navegación</div>
   <a class="sb-link active" href="dashboard.php"><i class="ti ti-home" aria-hidden="true"></i> Dashboard</a>
   <a class="sb-link" href="revistas.php"><i class="ti ti-file-text" aria-hidden="true"></i> Revistas</a>
+  <a class="sb-link" href="revistas_en.php"><i class="ti ti-world" aria-hidden="true"></i> Versión inglés</a>
   <a class="sb-link" href="categorias.php"><i class="ti ti-tag" aria-hidden="true"></i> Categorías</a>
   <?php if ($_SESSION['rol'] === 'admin'): ?>
   <a class="sb-link" href="usuarios.php"><i class="ti ti-users" aria-hidden="true"></i> Usuarios</a>

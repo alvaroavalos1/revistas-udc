@@ -117,6 +117,7 @@ $usuarios = $pdo->query('SELECT * FROM usuarios ORDER BY creado_en DESC')->fetch
   <div class="sb-section">Navegación</div>
   <a class="sb-link" href="dashboard.php"><i class="ti ti-home" aria-hidden="true"></i> Dashboard</a>
   <a class="sb-link" href="revistas.php"><i class="ti ti-file-text" aria-hidden="true"></i> Revistas</a>
+  <a class="sb-link" href="revistas_en.php"><i class="ti ti-world" aria-hidden="true"></i> Versión inglés</a>
   <a class="sb-link" href="categorias.php"><i class="ti ti-tag" aria-hidden="true"></i> Categorías</a>
   <a class="sb-link active" href="usuarios.php"><i class="ti ti-users" aria-hidden="true"></i> Usuarios</a>
   <div class="sb-bottom">

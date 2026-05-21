@@ -84,10 +84,9 @@ $categorias = $pdo->query('SELECT * FROM categorias ORDER BY nombre_es ASC')->fe
     .btn-toggle { padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; border: 1px solid #e2e8f0; background: #fff; color: #333; text-decoration: none; }
     .btn-toggle:hover { background: #f4f6fa; }
     .form-card { background: #fff; border-radius: 12px; border: 0.5px solid #e2e8f0; overflow: hidden; }
-    .form-card-header { background: #003B7A; padding: 16px 20px; display: flex; align-items: center; gap: 8px; }
+    .form-card-header { background: #003B7A; padding: 16px 20px; }
     .form-card-header h2 { color: #fff; font-size: 14px; font-weight: 500; }
     .form-card-body { padding: 20px; }
-    .form-card-body p { font-size: 12px; color: #aaa; margin-bottom: 4px; }
     .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     label { display: block; font-size: 12px; color: #555; margin-bottom: 4px; margin-top: 12px; }
     input, textarea { width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; outline: none; font-family: Arial, sans-serif; }
@@ -110,6 +109,7 @@ $categorias = $pdo->query('SELECT * FROM categorias ORDER BY nombre_es ASC')->fe
   <div class="sb-section">Navegación</div>
   <a class="sb-link" href="dashboard.php"><i class="ti ti-home" aria-hidden="true"></i> Dashboard</a>
   <a class="sb-link" href="revistas.php"><i class="ti ti-file-text" aria-hidden="true"></i> Revistas</a>
+  <a class="sb-link" href="revistas_en.php"><i class="ti ti-world" aria-hidden="true"></i> Versión inglés</a>
   <a class="sb-link active" href="categorias.php"><i class="ti ti-tag" aria-hidden="true"></i> Categorías</a>
   <?php if ($_SESSION['rol'] === 'admin'): ?>
   <a class="sb-link" href="usuarios.php"><i class="ti ti-users" aria-hidden="true"></i> Usuarios</a>
