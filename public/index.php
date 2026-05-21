@@ -10,15 +10,24 @@ if (isset($_GET['visita'])) {
     echo 'ok'; exit;
 }
 
+// Búsqueda
+$busqueda = trim($_GET['q'] ?? '');
+
 $stmt = $pdo->query('SELECT clave, texto_es, texto_en FROM ui_textos');
 $ui   = [];
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $ui[$row['clave']] = $lang === 'en' ? $row['texto_en'] : $row['texto_es'];
 }
 
-$categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY nombre_es')->fetchAll(PDO::FETCH_ASSOC);
-
+$categorias     = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY nombre_es')->fetchAll(PDO::FETCH_ASSOC);
 $total_revistas = $pdo->query('SELECT COUNT(*) FROM revistas WHERE estado = "publicada"')->fetchColumn();
+
+// Conteo por categoría
+$conteos = [];
+$stmt_c  = $pdo->query('SELECT categoria_id, COUNT(*) as total FROM revistas WHERE estado = "publicada" GROUP BY categoria_id');
+while ($row = $stmt_c->fetch(PDO::FETCH_ASSOC)) {
+    $conteos[$row['categoria_id']] = $row['total'];
+}
 
 if ($lang === 'en') {
     $mas_visitadas = $pdo->query('
@@ -42,6 +51,27 @@ if ($lang === 'en') {
     ')->fetchAll(PDO::FETCH_ASSOC);
 }
 
+// Búsqueda
+$resultados_busqueda = [];
+if ($busqueda) {
+    if ($lang === 'en') {
+        $stmt_b = $pdo->prepare('
+            SELECT re.titulo, re.descripcion, re.portada_url, re.pdf_url, re.revista_id, r.categoria_id
+            FROM revistas_en re JOIN revistas r ON re.revista_id = r.id
+            WHERE re.estado = "publicada" AND (re.titulo LIKE ? OR re.descripcion LIKE ?)
+        ');
+    } else {
+        $stmt_b = $pdo->prepare('
+            SELECT id AS revista_id, titulo, descripcion, portada_url, pdf_url, categoria_id
+            FROM revistas WHERE estado = "publicada" AND (titulo LIKE ? OR descripcion LIKE ?)
+        ');
+    }
+    $like = '%' . $busqueda . '%';
+    $stmt_b->execute([$like, $like]);
+    $resultados_busqueda = $stmt_b->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// Revistas por categoría
 $revistas_cat = [];
 $cat_actual   = null;
 if ($cat) {
@@ -63,6 +93,10 @@ if ($cat) {
     $stmt_rev->execute([$cat]);
     $revistas_cat = $stmt_rev->fetchAll(PDO::FETCH_ASSOC);
 }
+
+$iconos_cat = ['ti-rocket', 'ti-chart-bar', 'ti-building', 'ti-cpu', 'ti-heart', 'ti-book', 'ti-flask', 'ti-music'];
+$colores_cat = ['#EBF3FB', '#EAF3DE', '#FAEEDA', '#EEEDFE', '#FEF2F2', '#E1F5EE', '#F0FFF4', '#FFF5F5'];
+$colores_txt = ['#003B7A', '#3B6D11', '#856d00', '#5b21b6', '#B91C1C', '#0F6E56', '#276749', '#9B2C2C'];
 ?>
 <!DOCTYPE html>
 <html lang="<?= $lang ?>">
@@ -108,10 +142,17 @@ if ($cat) {
     .cat-link.active i { color: #003B7A; }
 
     /* Hero */
-    .hero { background: #003B7A; padding: 32px 24px 40px; position: relative; }
-    .hero-title { color: #fff; font-size: 22px; font-weight: 500; margin-bottom: 6px; }
-    .hero-sub { color: rgba(255,255,255,0.55); font-size: 13px; }
-    .hero-stats { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+    .hero { background: #003B7A; padding: 40px 24px 52px; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; top: -60px; right: -60px; width: 300px; height: 300px; border-radius: 50%; background: rgba(245,197,24,0.06); }
+    .hero::after  { content: ''; position: absolute; bottom: -80px; left: 30%; width: 200px; height: 200px; border-radius: 50%; background: rgba(255,255,255,0.03); }
+    .hero-title { color: #fff; font-size: 26px; font-weight: 500; margin-bottom: 8px; }
+    .hero-title span { color: #F5C518; }
+    .hero-sub { color: rgba(255,255,255,0.55); font-size: 14px; margin-bottom: 28px; }
+    .hero-search { display: flex; gap: 0; max-width: 500px; position: relative; z-index: 1; }
+    .hero-search input { flex: 1; padding: 13px 18px; border: none; border-radius: 10px 0 0 10px; font-size: 14px; outline: none; }
+    .hero-search button { padding: 13px 20px; background: #F5C518; border: none; border-radius: 0 10px 10px 0; cursor: pointer; font-size: 16px; color: #003B7A; font-weight: bold; }
+    .hero-search button:hover { background: #e6b800; }
+    .hero-stats { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; position: relative; z-index: 1; }
     .hero-stat { background: rgba(255,255,255,0.08); border: 0.5px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 12px 20px; }
     .hero-stat-val { color: #F5C518; font-size: 22px; font-weight: 500; }
     .hero-stat-label { color: rgba(255,255,255,0.5); font-size: 11px; margin-top: 2px; }
@@ -119,6 +160,16 @@ if ($cat) {
 
     /* Contenido */
     .content { padding: 28px 24px; max-width: 1100px; margin: 0 auto; }
+
+    /* Categorías visuales */
+    .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 36px; }
+    .cat-card { border-radius: 12px; padding: 16px; cursor: pointer; text-decoration: none; display: flex; flex-direction: column; gap: 8px; border: 1.5px solid transparent; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
+    .cat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); border-color: rgba(0,0,0,0.08); }
+    .cat-card i { font-size: 24px; }
+    .cat-card-name { font-size: 13px; font-weight: 500; }
+    .cat-card-count { font-size: 11px; opacity: 0.7; }
+
+    /* Secciones */
     .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; margin-top: 8px; }
     .section-bar { width: 3px; height: 22px; background: #F5C518; border-radius: 2px; flex-shrink: 0; }
     .section-title { font-size: 15px; font-weight: 500; color: #1a202c; }
@@ -127,10 +178,21 @@ if ($cat) {
 
     /* Grid de tarjetas */
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 14px; }
-    .card { background: #fff; border-radius: 12px; border: 0.5px solid #e2e8f0; overflow: hidden; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+    .card { background: #fff; border-radius: 12px; border: 0.5px solid #e2e8f0; overflow: hidden; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; opacity: 0; transform: translateY(20px); animation: fadeUp 0.4s ease forwards; }
     .card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,59,122,0.12); }
-    .card-img { width: 100%; height: 130px; background: #e8edf5; display: flex; align-items: center; justify-content: center; font-size: 42px; overflow: hidden; }
-    .card-img img { width: 100%; height: 100%; object-fit: cover; }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+    .card:nth-child(1) { animation-delay: 0.05s; }
+    .card:nth-child(2) { animation-delay: 0.10s; }
+    .card:nth-child(3) { animation-delay: 0.15s; }
+    .card:nth-child(4) { animation-delay: 0.20s; }
+    .card:nth-child(5) { animation-delay: 0.25s; }
+    .card:nth-child(6) { animation-delay: 0.30s; }
+    .card-img { width: 100%; height: 140px; background: #EBF3FB; display: flex; align-items: center; justify-content: center; font-size: 42px; overflow: hidden; position: relative; }
+    .card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+    .card:hover .card-img img { transform: scale(1.05); }
+    .card-hover-btn { position: absolute; inset: 0; background: rgba(0,59,122,0.7); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+    .card:hover .card-hover-btn { opacity: 1; }
+    .card-hover-btn span { background: #F5C518; color: #003B7A; padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 500; }
     .card-body { padding: 12px 12px 14px; }
     .card-title { font-size: 13px; font-weight: 500; color: #1a202c; margin-bottom: 3px; line-height: 1.35; }
     .card-cat { font-size: 11px; color: #aaa; margin-bottom: 8px; }
@@ -142,6 +204,10 @@ if ($cat) {
     .breadcrumb { font-size: 13px; color: #aaa; margin-bottom: 16px; }
     .breadcrumb a { color: #003B7A; text-decoration: none; }
     .breadcrumb a:hover { text-decoration: underline; }
+
+    /* Búsqueda */
+    .search-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .search-badge { background: #003B7A; color: #fff; font-size: 12px; padding: 3px 10px; border-radius: 20px; }
 
     .empty { text-align: center; padding: 60px 24px; color: #aaa; font-size: 14px; }
 
@@ -156,6 +222,10 @@ if ($cat) {
     .btn-close { background: none; border: none; color: rgba(255,255,255,0.7); font-size: 22px; cursor: pointer; }
     .btn-close:hover { color: #fff; }
     .pdf-frame { flex: 1; width: 100%; border: none; }
+
+    /* Footer */
+    .footer { background: #003B7A; color: rgba(255,255,255,0.5); text-align: center; padding: 24px; font-size: 12px; margin-top: 40px; border-top: 3px solid #F5C518; }
+    .footer strong { color: #F5C518; }
   </style>
 </head>
 <body>
@@ -174,14 +244,13 @@ if ($cat) {
 
 <!-- Overlay -->
 <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
-  
+
 <!-- Drawer -->
 <div class="drawer" id="drawer">
   <div class="drawer-header">
     <h2>Revistas UDC</h2>
     <p><?= $lang === 'es' ? 'Universidad de Colima' : 'University of Colima' ?></p>
   </div>
-
   <div class="drawer-section"><?= $lang === 'es' ? 'Idioma' : 'Language' ?></div>
   <div class="drawer-item" onclick="toggleLang()">
     <i class="ti ti-world" aria-hidden="true"></i>
@@ -192,10 +261,8 @@ if ($cat) {
     <a class="lang-option <?= $lang === 'es' ? 'active' : '' ?>" href="?lang=es">🇲🇽 Español</a>
     <a class="lang-option <?= $lang === 'en' ? 'active' : '' ?>" href="?lang=en">🇺🇸 English</a>
   </div>
-
   <div class="drawer-divider"></div>
   <div class="drawer-section"><?= $lang === 'es' ? 'Categorías' : 'Categories' ?></div>
-
   <a class="cat-link <?= !$cat ? 'active' : '' ?>" href="?lang=<?= $lang ?>">
     <i class="ti ti-home" aria-hidden="true"></i>
     <?= $lang === 'es' ? 'Inicio' : 'Home' ?>
@@ -206,7 +273,6 @@ if ($cat) {
       <?= htmlspecialchars($lang === 'en' ? $c['nombre_en'] : $c['nombre_es']) ?>
     </a>
   <?php endforeach; ?>
-
   <div class="drawer-divider"></div>
   <a class="drawer-item" href="login.php">
     <i class="ti ti-lock" aria-hidden="true"></i>
@@ -216,8 +282,17 @@ if ($cat) {
 
 <!-- Hero -->
 <div class="hero">
-  <div class="hero-title"><?= $lang === 'es' ? 'Plataforma de Revistas' : 'Magazine Platform' ?></div>
-  <div class="hero-sub"><?= $lang === 'es' ? 'Universidad de Colima — Difusión académica y cultural' : 'University of Colima — Academic and cultural outreach' ?></div>
+  <div class="hero-title">
+    <?= $lang === 'es' ? 'Plataforma de <span>Revistas</span>' : 'Magazine <span>Platform</span>' ?>
+  </div>
+  <div class="hero-sub">
+    <?= $lang === 'es' ? 'Universidad de Colima — Difusión académica y cultural' : 'University of Colima — Academic and cultural outreach' ?>
+  </div>
+  <form class="hero-search" method="GET" action="">
+    <input type="hidden" name="lang" value="<?= $lang ?>">
+    <input type="text" name="q" placeholder="<?= $lang === 'es' ? 'Buscar revista...' : 'Search magazine...' ?>" value="<?= htmlspecialchars($busqueda) ?>">
+    <button type="submit">&#128269;</button>
+  </form>
   <div class="hero-stats">
     <div class="hero-stat">
       <div class="hero-stat-val"><?= $total_revistas ?></div>
@@ -237,7 +312,23 @@ if ($cat) {
 
 <!-- Contenido -->
 <div class="content">
-  <?php if ($cat && $cat_actual): ?>
+
+  <?php if ($busqueda): ?>
+    <!-- Resultados de búsqueda -->
+    <div class="search-header">
+      <div class="section-bar"></div>
+      <span class="section-title"><?= $lang === 'es' ? 'Resultados para:' : 'Results for:' ?></span>
+      <span class="search-badge"><?= htmlspecialchars($busqueda) ?></span>
+      <a href="?lang=<?= $lang ?>" style="margin-left:auto;font-size:12px;color:#003B7A;text-decoration:none;">✕ <?= $lang === 'es' ? 'Limpiar' : 'Clear' ?></a>
+    </div>
+    <?php if (empty($resultados_busqueda)): ?>
+      <div class="empty">🔍 <?= $lang === 'es' ? 'No se encontraron revistas.' : 'No magazines found.' ?></div>
+    <?php else: ?>
+      <div class="grid"><?php foreach ($resultados_busqueda as $rev): echo tarjeta($rev, $lang, false); endforeach; ?></div>
+    <?php endif; ?>
+
+  <?php elseif ($cat && $cat_actual): ?>
+    <!-- Vista de categoría -->
     <div class="breadcrumb">
       <a href="?lang=<?= $lang ?>">&#8592; <?= $lang === 'es' ? 'Inicio' : 'Home' ?></a>
       &nbsp;/&nbsp; <?= htmlspecialchars($lang === 'en' ? $cat_actual['nombre_en'] : $cat_actual['nombre_es']) ?>
@@ -248,14 +339,37 @@ if ($cat) {
       <span class="section-sub"><?= count($revistas_cat) ?> <?= $lang === 'es' ? 'revistas' : 'magazines' ?></span>
     </div>
     <?php if (empty($revistas_cat)): ?>
-      <div class="empty">📭 <?= $lang === 'es' ? 'No hay revistas en esta categoría aún.' : 'No magazines in this category yet.' ?></div>
+      <div class="empty">📭 <?= $lang === 'es' ? 'No hay revistas en esta categoría.' : 'No magazines in this category yet.' ?></div>
     <?php else: ?>
-      <div class="grid">
-        <?php foreach ($revistas_cat as $rev): echo tarjeta($rev, $lang, false); endforeach; ?>
-      </div>
+      <div class="grid"><?php foreach ($revistas_cat as $rev): echo tarjeta($rev, $lang, false); endforeach; ?></div>
     <?php endif; ?>
 
   <?php else: ?>
+    <!-- Inicio -->
+
+    <!-- Categorías visuales -->
+    <div class="section-header">
+      <div class="section-bar"></div>
+      <span class="section-title"><?= $lang === 'es' ? 'Explorar por categoría' : 'Browse by category' ?></span>
+    </div>
+    <div class="cat-grid">
+      <?php foreach ($categorias as $i => $c):
+        $idx   = $i % count($iconos_cat);
+        $color = $colores_cat[$idx];
+        $txt   = $colores_txt[$idx];
+        $icono = $iconos_cat[$idx];
+        $total = $conteos[$c['id']] ?? 0;
+        $nombre = $lang === 'en' ? $c['nombre_en'] : $c['nombre_es'];
+      ?>
+      <a class="cat-card" href="?lang=<?= $lang ?>&cat=<?= $c['id'] ?>" style="background:<?= $color ?>; color:<?= $txt ?>">
+        <i class="ti <?= $icono ?>" style="color:<?= $txt ?>" aria-hidden="true"></i>
+        <span class="cat-card-name"><?= htmlspecialchars($nombre) ?></span>
+        <span class="cat-card-count"><?= $total ?> <?= $lang === 'es' ? 'revistas' : 'magazines' ?></span>
+      </a>
+      <?php endforeach; ?>
+    </div>
+
+    <!-- Más visitadas -->
     <div class="section-wrap">
       <div class="section-header">
         <div class="section-bar"></div>
@@ -269,6 +383,7 @@ if ($cat) {
       <?php endif; ?>
     </div>
 
+    <!-- Recientes -->
     <div class="section-wrap">
       <div class="section-header">
         <div class="section-bar"></div>
@@ -282,6 +397,14 @@ if ($cat) {
       <?php endif; ?>
     </div>
   <?php endif; ?>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <strong>Universidad de Colima</strong> &nbsp;·&nbsp;
+  <?= $lang === 'es' ? 'Plataforma de Revistas Institucional' : 'Institutional Magazine Platform' ?>
+  &nbsp;·&nbsp; <?= date('Y') ?>
 </div>
 
 <!-- Visor PDF -->
@@ -311,6 +434,9 @@ function tarjeta($rev, $lang, $mostrar_visitas = false) {
         <?php else: ?>
           &#x1F4C4;
         <?php endif; ?>
+        <div class="card-hover-btn">
+          <span><?= $lang === 'es' ? 'Leer' : 'Read' ?></span>
+        </div>
       </div>
       <div class="card-body">
         <div class="card-title"><?= $titulo ?></div>
