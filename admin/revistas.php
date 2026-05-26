@@ -69,7 +69,6 @@ $revistas   = $pdo->query('
     ORDER BY r.creado_en DESC
 ')->fetchAll(PDO::FETCH_ASSOC);
 
-// IDs que ya tienen versión en inglés
 $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::FETCH_COLUMN);
 ?>
 <!DOCTYPE html>
@@ -160,6 +159,7 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
   <a class="sb-link" href="revistas_en.php"><i class="ti ti-world" aria-hidden="true"></i> Versión inglés</a>
   <a class="sb-link" href="categorias.php"><i class="ti ti-tag" aria-hidden="true"></i> Categorías</a>
   <?php if ($_SESSION['rol'] === 'admin'): ?>
+  <a class="sb-link" href="accesos.php"><i class="ti ti-shield" aria-hidden="true"></i> Registro IP</a>
   <a class="sb-link" href="usuarios.php"><i class="ti ti-users" aria-hidden="true"></i> Usuarios</a>
   <?php endif; ?>
   <div class="sb-bottom">
@@ -196,7 +196,7 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
     <?php else: ?>
     <div class="grid">
       <?php foreach ($revistas as $r):
-        $badge = match($r['estado']) { 'publicada' => 'badge-pub', 'borrador' => 'badge-dra', default => 'badge-arc' };
+        $badge    = match($r['estado']) { 'publicada' => 'badge-pub', 'borrador' => 'badge-dra', default => 'badge-arc' };
         $tiene_en = in_array($r['id'], $con_ingles);
       ?>
       <div class="card">
@@ -210,9 +210,7 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
         <div class="card-body">
           <div class="card-title">
             <?= htmlspecialchars($r['titulo']) ?>
-            <?php if ($tiene_en): ?>
-              <span class="badge-en">🇺🇸 EN</span>
-            <?php endif; ?>
+            <?php if ($tiene_en): ?><span class="badge-en">🇺🇸 EN</span><?php endif; ?>
           </div>
           <div class="card-cat"><?= htmlspecialchars($r['categoria']) ?> · <?= htmlspecialchars($r['autor']) ?></div>
           <span class="badge <?= $badge ?>"><?= $r['estado'] ?></span>

@@ -1,0 +1,25 @@
+# Bloquear listado de directorios
+Options -Indexes
+
+# Headers de seguridad
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-Frame-Options "SAMEORIGIN"
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# Ocultar versión de servidor
+ServerSignature Off
+
+# Bloquear acceso a archivos sensibles
+<FilesMatch "\.(sql|log|env|json|md|git|htaccess)$">
+    Order deny,allow
+    Deny from all
+</FilesMatch>
+
+# Bloquear acceso directo a carpetas del sistema
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^config/ - [F,L]
+    RewriteRule ^admin/$ - [F,L]
+    RewriteRule ^uploads/.*\.php$ - [F,L]
+</IfModule>

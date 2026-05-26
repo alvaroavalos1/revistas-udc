@@ -10,7 +10,6 @@ if (!isset($_SESSION['usuario_id'])) {
 $mensaje = '';
 $error   = '';
 
-// Eliminar versión en inglés
 if (isset($_GET['eliminar'])) {
     $id = (int)$_GET['eliminar'];
     $pdo->prepare('DELETE FROM revistas_en WHERE id = ?')->execute([$id]);
@@ -18,7 +17,6 @@ if (isset($_GET['eliminar'])) {
     exit;
 }
 
-// Cambiar estado
 if (isset($_GET['estado']) && isset($_GET['id'])) {
     $id     = (int)$_GET['id'];
     $estado = $_GET['estado'];
@@ -30,14 +28,12 @@ if (isset($_GET['estado']) && isset($_GET['id'])) {
     exit;
 }
 
-// Guardar nueva versión en inglés
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $revista_id  = (int)$_POST['revista_id'];
     $titulo      = trim($_POST['titulo']);
     $descripcion = trim($_POST['descripcion']);
     $estado      = $_POST['estado'];
 
-    // Verificar que no exista ya una versión en inglés para esa revista
     $existe = $pdo->prepare('SELECT id FROM revistas_en WHERE revista_id = ?');
     $existe->execute([$revista_id]);
 
@@ -64,13 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($titulo && $revista_id) {
             $stmt = $pdo->prepare('INSERT INTO revistas_en (revista_id, subida_por, titulo, descripcion, portada_url, pdf_url, estado, publicada_en) VALUES (?,?,?,?,?,?,?,?)');
             $stmt->execute([
-                $revista_id,
-                $_SESSION['usuario_id'],
-                $titulo,
-                $descripcion,
-                $portada_url,
-                $pdf_url,
-                $estado,
+                $revista_id, $_SESSION['usuario_id'], $titulo, $descripcion,
+                $portada_url, $pdf_url, $estado,
                 $estado === 'publicada' ? date('Y-m-d H:i:s') : null
             ]);
             $mensaje = 'Versión en inglés guardada correctamente';
@@ -80,7 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Revistas en español disponibles
 $revistas_es = $pdo->query('
     SELECT r.id, r.titulo, c.nombre_es AS categoria
     FROM revistas r
@@ -88,10 +78,8 @@ $revistas_es = $pdo->query('
     ORDER BY r.titulo ASC
 ')->fetchAll(PDO::FETCH_ASSOC);
 
-// IDs que ya tienen versión en inglés
 $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::FETCH_COLUMN);
 
-// Versiones en inglés existentes
 $versiones = $pdo->query('
     SELECT re.*, r.titulo AS titulo_es, c.nombre_es AS categoria, u.nombre AS autor
     FROM revistas_en re
@@ -106,7 +94,7 @@ $versiones = $pdo->query('
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Revistas en inglés — Panel UDC</title>
+  <title>Versión inglés — Panel UDC</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; background: #f4f6fa; display: flex; min-height: 100vh; }
@@ -165,7 +153,6 @@ $versiones = $pdo->query('
     .alert-ok  { background: #EAF3DE; color: #3B6D11; border-color: #F5C518; }
     .alert-err { background: #FEF2F2; color: #B91C1C; border-color: #B91C1C; }
     .empty { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
-    .ya-tiene { font-size: 11px; color: #aaa; font-style: italic; }
   </style>
 </head>
 <body>
@@ -181,6 +168,7 @@ $versiones = $pdo->query('
   <a class="sb-link active" href="revistas_en.php"><i class="ti ti-world" aria-hidden="true"></i> Versión inglés</a>
   <a class="sb-link" href="categorias.php"><i class="ti ti-tag" aria-hidden="true"></i> Categorías</a>
   <?php if ($_SESSION['rol'] === 'admin'): ?>
+  <a class="sb-link" href="accesos.php"><i class="ti ti-shield" aria-hidden="true"></i> Registro IP</a>
   <a class="sb-link" href="usuarios.php"><i class="ti ti-users" aria-hidden="true"></i> Usuarios</a>
   <?php endif; ?>
   <div class="sb-bottom">
@@ -202,14 +190,13 @@ $versiones = $pdo->query('
   </div>
 
   <div class="content">
-    <!-- Tabla de versiones en inglés -->
     <div class="tabla-wrap">
       <div class="tabla-header">
         <div class="tabla-header-bar"></div>
         Versiones en inglés (<?= count($versiones) ?>)
       </div>
       <?php if (empty($versiones)): ?>
-        <div class="empty">📭 No hay versiones en inglés todavía.<br>Usa el formulario para agregar la primera.</div>
+        <div class="empty">📭 No hay versiones en inglés todavía.</div>
       <?php else: ?>
       <table>
         <thead>
@@ -250,7 +237,6 @@ $versiones = $pdo->query('
       <?php endif; ?>
     </div>
 
-    <!-- Formulario nueva versión en inglés -->
     <div class="form-card">
       <div class="form-card-header">
         <h2>Nueva versión en inglés</h2>
@@ -266,29 +252,23 @@ $versiones = $pdo->query('
             <?php foreach ($revistas_es as $r): ?>
               <option value="<?= $r['id'] ?>" <?= in_array($r['id'], $con_ingles) ? 'disabled' : '' ?>>
                 <?= htmlspecialchars($r['titulo']) ?> — <?= htmlspecialchars($r['categoria']) ?>
-                <?= in_array($r['id'], $con_ingles) ? '(ya tiene versión en inglés)' : '' ?>
+                <?= in_array($r['id'], $con_ingles) ? '(ya tiene versión)' : '' ?>
               </option>
             <?php endforeach; ?>
           </select>
-
           <label>Title in English *</label>
           <input type="text" name="titulo" placeholder="Magazine title in English" required>
-
           <label>Description in English</label>
           <textarea name="descripcion" placeholder="Brief description in English..."></textarea>
-
           <label>Cover image (English version)</label>
           <input type="file" name="portada" accept="image/*">
-
           <label>PDF file (English version)</label>
           <input type="file" name="pdf" accept="application/pdf">
-
           <label>Status</label>
           <select name="estado">
             <option value="borrador">Draft</option>
             <option value="publicada">Publish now</option>
           </select>
-
           <button type="submit" class="btn-submit">Save English version</button>
         </form>
       </div>
