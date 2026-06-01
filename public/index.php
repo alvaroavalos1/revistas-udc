@@ -1,4 +1,6 @@
-<?php
+ 
+  
+  <?php
 require_once '../config/db.php';
 
 $lang = isset($_GET['lang']) && $_GET['lang'] === 'en' ? 'en' : 'es';

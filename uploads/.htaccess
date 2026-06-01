@@ -1,0 +1,10 @@
+# Solo permitir imágenes y PDFs, bloquear PHP y ejecutables
+Order deny,allow
+Deny from all
+
+<FilesMatch "\.(jpg|jpeg|png|gif|webp|pdf)$">
+    Allow from all
+</FilesMatch>
+
+# Bloquear ejecución de PHP en esta carpeta
+php_flag engine off
