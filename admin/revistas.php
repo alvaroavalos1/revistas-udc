@@ -227,6 +227,7 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
             <?php if ($r['pdf_url']): ?>
               <a class="btn-xs" href="../<?= htmlspecialchars($r['pdf_url']) ?>" target="_blank">Ver PDF</a>
             <?php endif; ?>
+            <a class="btn-xs" href="editar_revista.php?id=<?= $r['id'] ?>"><i class="ti ti-edit" style="font-size:11px"></i> Editar</a>
             <a class="btn-xs danger" href="?eliminar=<?= $r['id'] ?>" onclick="return confirm('¿Eliminar esta revista?')">Eliminar</a>
           </div>
         </div>

@@ -1,0 +1,282 @@
+<?php
+session_start();
+require_once '../config/db.php';
+
+if (!isset($_SESSION['usuario_id'])) {
+    header('Location: ../public/login.php');
+    exit;
+}
+
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+if (!$id) {
+    header('Location: revistas.php');
+    exit;
+}
+
+// Obtener revista
+$stmt = $pdo->prepare('SELECT * FROM revistas WHERE id = ?');
+$stmt->execute([$id]);
+$revista = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$revista) {
+    header('Location: revistas.php');
+    exit;
+}
+
+$mensaje = '';
+$error   = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $titulo      = trim($_POST['titulo']);
+    $descripcion = trim($_POST['descripcion']);
+    $categoria   = (int)$_POST['categoria_id'];
+    $estado      = $_POST['estado'];
+
+    // Subir nueva portada si se seleccionó
+    $portada_url = $revista['portada_url'];
+    if (!empty($_FILES['portada']['name'])) {
+        $ext      = pathinfo($_FILES['portada']['name'], PATHINFO_EXTENSION);
+        $allowed  = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        if (in_array(strtolower($ext), $allowed)) {
+            $filename = 'portada_' . uniqid() . '.' . $ext;
+            if (move_uploaded_file($_FILES['portada']['tmp_name'], '../uploads/' . $filename)) {
+                $portada_url = 'uploads/' . $filename;
+            }
+        } else {
+            $error = 'La portada debe ser una imagen (jpg, png, gif, webp)';
+        }
+    }
+
+    // Subir nuevo PDF si se seleccionó
+    $pdf_url = $revista['pdf_url'];
+    if (!empty($_FILES['pdf']['name']) && !$error) {
+        $ext_pdf = pathinfo($_FILES['pdf']['name'], PATHINFO_EXTENSION);
+        if (strtolower($ext_pdf) === 'pdf') {
+            $filename_pdf = 'revista_' . uniqid() . '.pdf';
+            if (move_uploaded_file($_FILES['pdf']['tmp_name'], '../uploads/' . $filename_pdf)) {
+                $pdf_url = 'uploads/' . $filename_pdf;
+            }
+        } else {
+            $error = 'El archivo debe ser un PDF';
+        }
+    }
+
+    if (!$error && $titulo && $categoria) {
+        $stmt = $pdo->prepare('
+            UPDATE revistas
+            SET titulo = ?, descripcion = ?, categoria_id = ?, portada_url = ?, pdf_url = ?, estado = ?,
+                publicada_en = ?
+            WHERE id = ?
+        ');
+        $stmt->execute([
+            $titulo, $descripcion, $categoria, $portada_url, $pdf_url, $estado,
+            $estado === 'publicada' ? date('Y-m-d H:i:s') : null,
+            $id
+        ]);
+        $mensaje = 'Revista actualizada correctamente';
+
+        // Recargar datos actualizados
+        $stmt2 = $pdo->prepare('SELECT * FROM revistas WHERE id = ?');
+        $stmt2->execute([$id]);
+        $revista = $stmt2->fetch(PDO::FETCH_ASSOC);
+    } elseif (!$error) {
+        $error = 'El título y la categoría son obligatorios';
+    }
+}
+
+$categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY nombre_es')->fetchAll(PDO::FETCH_ASSOC);
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editar revista — Panel UDC</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f4f6fa; display: flex; min-height: 100vh; }
+    .sidebar { width: 220px; background: #003B7A; display: flex; flex-direction: column; flex-shrink: 0; min-height: 100vh; }
+    .sb-logo { padding: 22px 18px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sb-logo-brand { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .sb-dot { width: 8px; height: 8px; border-radius: 50%; background: #F5C518; flex-shrink: 0; }
+    .sb-logo h2 { color: #fff; font-size: 15px; font-weight: 500; }
+    .sb-logo p  { color: rgba(255,255,255,0.4); font-size: 11px; margin-top: 2px; padding-left: 16px; }
+    .sb-section { padding: 16px 18px 4px; font-size: 10px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.06em; }
+    .sb-link { display: flex; align-items: center; gap: 10px; padding: 10px 18px; font-size: 13px; color: rgba(255,255,255,0.65); text-decoration: none; border-left: 3px solid transparent; }
+    .sb-link:hover { background: rgba(255,255,255,0.07); color: #fff; }
+    .sb-link.active { background: rgba(245,197,24,0.12); color: #F5C518; border-left-color: #F5C518; }
+    .sb-link i { font-size: 17px; }
+    .sb-bottom { margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding: 10px 0; }
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .topbar { background: #fff; border-bottom: 3px solid #F5C518; padding: 0 24px; height: 54px; display: flex; align-items: center; justify-content: space-between; }
+    .topbar h1 { font-size: 16px; color: #003B7A; font-weight: 500; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .btn-back { display: flex; align-items: center; gap: 6px; padding: 7px 14px; background: #EBF3FB; border: 1px solid #b8d4ef; border-radius: 8px; font-size: 13px; color: #003B7A; text-decoration: none; font-weight: 500; }
+    .btn-back:hover { background: #d6e8f7; }
+    .user-info { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #555; }
+    .avatar { width: 34px; height: 34px; border-radius: 50%; background: #003B7A; color: #F5C518; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+    .badge-rol { background: #FEF9E7; color: #003B7A; border: 1px solid #F5C518; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+    .content { padding: 24px; flex: 1; display: grid; grid-template-columns: 1fr 300px; gap: 24px; align-items: start; }
+    .form-card { background: #fff; border-radius: 12px; border: 0.5px solid #e2e8f0; overflow: hidden; }
+    .form-card-header { background: #003B7A; padding: 16px 20px; }
+    .form-card-header h2 { color: #fff; font-size: 14px; font-weight: 500; }
+    .form-card-body { padding: 24px; }
+    label { display: block; font-size: 12px; color: #555; margin-bottom: 4px; margin-top: 16px; }
+    label:first-of-type { margin-top: 0; }
+    input[type=text], textarea, select { width: 100%; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; outline: none; font-family: Arial, sans-serif; }
+    input[type=text]:focus, textarea:focus, select:focus { border-color: #003B7A; }
+    textarea { resize: vertical; min-height: 100px; }
+    input[type=file] { font-size: 13px; width: 100%; }
+    .file-current { font-size: 11px; color: #aaa; margin-top: 4px; }
+    .file-current a { color: #003B7A; }
+    .btn-submit { width: 100%; padding: 12px; background: #003B7A; color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 20px; font-weight: 500; }
+    .btn-submit:hover { background: #00306a; }
+    .alert { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; border-left: 3px solid; }
+    .alert-ok  { background: #EAF3DE; color: #3B6D11; border-color: #F5C518; }
+    .alert-err { background: #FEF2F2; color: #B91C1C; border-color: #B91C1C; }
+
+    /* Panel lateral de vista previa */
+    .preview-card { background: #fff; border-radius: 12px; border: 0.5px solid #e2e8f0; overflow: hidden; position: sticky; top: 24px; }
+    .preview-header { background: #003B7A; padding: 14px 18px; }
+    .preview-header h3 { color: #fff; font-size: 13px; font-weight: 500; }
+    .preview-body { padding: 16px; }
+    .preview-img { width: 100%; height: 160px; background: #EBF3FB; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 48px; overflow: hidden; margin-bottom: 12px; }
+    .preview-img img { width: 100%; height: 100%; object-fit: cover; }
+    .preview-title { font-size: 14px; font-weight: 500; color: #1a202c; margin-bottom: 4px; }
+    .preview-cat { font-size: 12px; color: #aaa; margin-bottom: 12px; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+    .badge-pub { background: #EAF3DE; color: #3B6D11; }
+    .badge-dra { background: #FEF9E7; color: #856d00; }
+    .badge-arc { background: #f4f6fa; color: #888; }
+    .preview-pdf { margin-top: 12px; }
+    .btn-ver-pdf { display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: #003B7A; color: #fff; border-radius: 8px; font-size: 12px; text-decoration: none; justify-content: center; }
+    .btn-ver-pdf:hover { background: #00306a; }
+    .no-pdf { font-size: 12px; color: #aaa; text-align: center; padding: 8px; background: #f4f6fa; border-radius: 8px; }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-brand"><div class="sb-dot"></div><h2>Revistas UDC</h2></div>
+    <p>Panel de administración</p>
+  </div>
+  <div class="sb-section">Navegación</div>
+  <a class="sb-link" href="dashboard.php"><i class="ti ti-home" aria-hidden="true"></i> Dashboard</a>
+  <a class="sb-link active" href="revistas.php"><i class="ti ti-file-text" aria-hidden="true"></i> Revistas</a>
+  <a class="sb-link" href="revistas_en.php"><i class="ti ti-world" aria-hidden="true"></i> Versión inglés</a>
+  <a class="sb-link" href="categorias.php"><i class="ti ti-tag" aria-hidden="true"></i> Categorías</a>
+  <?php if ($_SESSION['rol'] === 'admin'): ?>
+  <a class="sb-link" href="accesos.php"><i class="ti ti-shield" aria-hidden="true"></i> Registro IP</a>
+  <a class="sb-link" href="usuarios.php"><i class="ti ti-users" aria-hidden="true"></i> Usuarios</a>
+  <?php endif; ?>
+  <div class="sb-bottom">
+    <a class="sb-link" href="../public/logout.php"><i class="ti ti-logout" aria-hidden="true"></i> Cerrar sesión</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <h1>Editar revista</h1>
+    <div class="topbar-right">
+      <a class="btn-back" href="revistas.php"><i class="ti ti-arrow-left" aria-hidden="true"></i> Volver</a>
+      <div class="user-info">
+        <span><?= htmlspecialchars($_SESSION['nombre']) ?></span>
+        <span class="badge-rol"><?= $_SESSION['rol'] ?></span>
+        <div class="avatar"><?= strtoupper(substr($_SESSION['nombre'], 0, 2)) ?></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="form-card">
+      <div class="form-card-header">
+        <h2>Datos de la revista</h2>
+      </div>
+      <div class="form-card-body">
+        <?php if ($mensaje): ?><div class="alert alert-ok"><?= $mensaje ?></div><?php endif; ?>
+        <?php if ($error):   ?><div class="alert alert-err"><?= $error ?></div><?php endif; ?>
+
+        <form method="POST" enctype="multipart/form-data">
+          <label>Título *</label>
+          <input type="text" name="titulo" value="<?= htmlspecialchars($revista['titulo']) ?>" required>
+
+          <label>Descripción</label>
+          <textarea name="descripcion"><?= htmlspecialchars($revista['descripcion'] ?? '') ?></textarea>
+
+          <label>Categoría *</label>
+          <select name="categoria_id" required>
+            <?php foreach ($categorias as $c): ?>
+              <option value="<?= $c['id'] ?>" <?= $c['id'] == $revista['categoria_id'] ? 'selected' : '' ?>>
+                <?= htmlspecialchars($c['nombre_es']) ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+
+          <label>Estado</label>
+          <select name="estado">
+            <option value="borrador"  <?= $revista['estado'] === 'borrador'  ? 'selected' : '' ?>>Borrador</option>
+            <option value="publicada" <?= $revista['estado'] === 'publicada' ? 'selected' : '' ?>>Publicada</option>
+            <option value="archivada" <?= $revista['estado'] === 'archivada' ? 'selected' : '' ?>>Archivada</option>
+          </select>
+
+          <label>Portada (imagen)</label>
+          <input type="file" name="portada" accept="image/*">
+          <?php if ($revista['portada_url']): ?>
+            <div class="file-current">Actual: <a href="../<?= htmlspecialchars($revista['portada_url']) ?>" target="_blank">ver portada</a></div>
+          <?php else: ?>
+            <div class="file-current">Sin portada — sube una imagen</div>
+          <?php endif; ?>
+
+          <label>Archivo PDF</label>
+          <input type="file" name="pdf" accept="application/pdf">
+          <?php if ($revista['pdf_url']): ?>
+            <div class="file-current">Actual: <a href="../<?= htmlspecialchars($revista['pdf_url']) ?>" target="_blank">ver PDF</a></div>
+          <?php else: ?>
+            <div class="file-current">Sin PDF — sube el archivo</div>
+          <?php endif; ?>
+
+          <button type="submit" class="btn-submit">Guardar cambios</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Vista previa -->
+    <div class="preview-card">
+      <div class="preview-header"><h3>Vista previa</h3></div>
+      <div class="preview-body">
+        <div class="preview-img">
+          <?php if ($revista['portada_url']): ?>
+            <img src="../<?= htmlspecialchars($revista['portada_url']) ?>" alt="Portada">
+          <?php else: ?>
+            📄
+          <?php endif; ?>
+        </div>
+        <div class="preview-title"><?= htmlspecialchars($revista['titulo']) ?></div>
+        <?php
+          $cat_actual = '';
+          foreach ($categorias as $c) {
+            if ($c['id'] == $revista['categoria_id']) { $cat_actual = $c['nombre_es']; break; }
+          }
+        ?>
+        <div class="preview-cat"><?= htmlspecialchars($cat_actual) ?></div>
+        <?php
+          $badge = match($revista['estado']) { 'publicada' => 'badge-pub', 'borrador' => 'badge-dra', default => 'badge-arc' };
+        ?>
+        <span class="badge <?= $badge ?>"><?= $revista['estado'] ?></span>
+        <div class="preview-pdf">
+          <?php if ($revista['pdf_url']): ?>
+            <a class="btn-ver-pdf" href="../<?= htmlspecialchars($revista['pdf_url']) ?>" target="_blank">
+              <i class="ti ti-file-text" aria-hidden="true"></i> Ver PDF actual
+            </a>
+          <?php else: ?>
+            <div class="no-pdf">📭 Sin PDF todavía</div>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
