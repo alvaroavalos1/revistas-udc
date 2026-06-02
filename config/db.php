@@ -5,7 +5,7 @@ if ($_SERVER['HTTP_HOST'] === 'localhost' || $_SERVER['HTTP_HOST'] === '127.0.0.
     $host     = 'localhost';
     $dbname   = 'plataforma_revistas';
     $user     = 'root';
-    $password = '';
+    $password = 'root';
 } else {
     // Configuración SERVIDOR (InfinityFree)
     $host     = 'sql305.infinityfree.com';
