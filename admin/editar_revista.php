@@ -13,6 +13,22 @@ if (!$id) {
     exit;
 }
 
+// Eliminar portada
+if (isset($_GET['eliminar_portada'])) {
+    $stmt = $pdo->prepare('UPDATE revistas SET portada_url = NULL WHERE id = ?');
+    $stmt->execute([$id]);
+    header('Location: editar_revista.php?id=' . $id . '&msg=portada_eliminada');
+    exit;
+}
+
+// Eliminar PDF
+if (isset($_GET['eliminar_pdf'])) {
+    $stmt = $pdo->prepare('UPDATE revistas SET pdf_url = NULL WHERE id = ?');
+    $stmt->execute([$id]);
+    header('Location: editar_revista.php?id=' . $id . '&msg=pdf_eliminado');
+    exit;
+}
+
 // Obtener revista
 $stmt = $pdo->prepare('SELECT * FROM revistas WHERE id = ?');
 $stmt->execute([$id]);
@@ -26,17 +42,21 @@ if (!$revista) {
 $mensaje = '';
 $error   = '';
 
+if (isset($_GET['msg'])) {
+    if ($_GET['msg'] === 'portada_eliminada') $mensaje = 'Portada eliminada correctamente';
+    if ($_GET['msg'] === 'pdf_eliminado')     $mensaje = 'PDF eliminado correctamente';
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $titulo      = trim($_POST['titulo']);
     $descripcion = trim($_POST['descripcion']);
     $categoria   = (int)$_POST['categoria_id'];
     $estado      = $_POST['estado'];
 
-    // Subir nueva portada si se seleccionó
     $portada_url = $revista['portada_url'];
     if (!empty($_FILES['portada']['name'])) {
-        $ext      = pathinfo($_FILES['portada']['name'], PATHINFO_EXTENSION);
-        $allowed  = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $ext     = pathinfo($_FILES['portada']['name'], PATHINFO_EXTENSION);
+        $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         if (in_array(strtolower($ext), $allowed)) {
             $filename = 'portada_' . uniqid() . '.' . $ext;
             if (move_uploaded_file($_FILES['portada']['tmp_name'], '../uploads/' . $filename)) {
@@ -47,7 +67,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Subir nuevo PDF si se seleccionó
     $pdf_url = $revista['pdf_url'];
     if (!empty($_FILES['pdf']['name']) && !$error) {
         $ext_pdf = pathinfo($_FILES['pdf']['name'], PATHINFO_EXTENSION);
@@ -75,7 +94,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
         $mensaje = 'Revista actualizada correctamente';
 
-        // Recargar datos actualizados
         $stmt2 = $pdo->prepare('SELECT * FROM revistas WHERE id = ?');
         $stmt2->execute([$id]);
         $revista = $stmt2->fetch(PDO::FETCH_ASSOC);
@@ -122,20 +140,22 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
     .form-card-header h2 { color: #fff; font-size: 14px; font-weight: 500; }
     .form-card-body { padding: 24px; }
     label { display: block; font-size: 12px; color: #555; margin-bottom: 4px; margin-top: 16px; }
-    label:first-of-type { margin-top: 0; }
     input[type=text], textarea, select { width: 100%; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; outline: none; font-family: Arial, sans-serif; }
     input[type=text]:focus, textarea:focus, select:focus { border-color: #003B7A; }
     textarea { resize: vertical; min-height: 100px; }
     input[type=file] { font-size: 13px; width: 100%; }
-    .file-current { font-size: 11px; color: #aaa; margin-top: 4px; }
-    .file-current a { color: #003B7A; }
+    .file-actual { display: flex; align-items: center; justify-content: space-between; background: #f4f6fa; border-radius: 8px; padding: 8px 12px; margin-top: 6px; }
+    .file-actual-info { font-size: 11px; color: #555; }
+    .file-actual-info a { color: #003B7A; text-decoration: none; font-weight: 500; }
+    .file-actual-info a:hover { text-decoration: underline; }
+    .btn-eliminar-archivo { display: flex; align-items: center; gap: 4px; padding: 4px 10px; background: #FEF2F2; color: #B91C1C; border: 1px solid #fca5a5; border-radius: 6px; font-size: 11px; cursor: pointer; text-decoration: none; }
+    .btn-eliminar-archivo:hover { background: #fee2e2; }
+    .no-archivo { font-size: 11px; color: #aaa; margin-top: 4px; background: #f4f6fa; border-radius: 8px; padding: 8px 12px; }
     .btn-submit { width: 100%; padding: 12px; background: #003B7A; color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 20px; font-weight: 500; }
     .btn-submit:hover { background: #00306a; }
     .alert { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; border-left: 3px solid; }
     .alert-ok  { background: #EAF3DE; color: #3B6D11; border-color: #F5C518; }
     .alert-err { background: #FEF2F2; color: #B91C1C; border-color: #B91C1C; }
-
-    /* Panel lateral de vista previa */
     .preview-card { background: #fff; border-radius: 12px; border: 0.5px solid #e2e8f0; overflow: hidden; position: sticky; top: 24px; }
     .preview-header { background: #003B7A; padding: 14px 18px; }
     .preview-header h3 { color: #fff; font-size: 13px; font-weight: 500; }
@@ -148,10 +168,9 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
     .badge-pub { background: #EAF3DE; color: #3B6D11; }
     .badge-dra { background: #FEF9E7; color: #856d00; }
     .badge-arc { background: #f4f6fa; color: #888; }
-    .preview-pdf { margin-top: 12px; }
-    .btn-ver-pdf { display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: #003B7A; color: #fff; border-radius: 8px; font-size: 12px; text-decoration: none; justify-content: center; }
+    .btn-ver-pdf { display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: #003B7A; color: #fff; border-radius: 8px; font-size: 12px; text-decoration: none; justify-content: center; margin-top: 12px; }
     .btn-ver-pdf:hover { background: #00306a; }
-    .no-pdf { font-size: 12px; color: #aaa; text-align: center; padding: 8px; background: #f4f6fa; border-radius: 8px; }
+    .no-pdf { font-size: 12px; color: #aaa; text-align: center; padding: 8px; background: #f4f6fa; border-radius: 8px; margin-top: 12px; }
   </style>
 </head>
 <body>
@@ -221,20 +240,32 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
           </select>
 
           <label>Portada (imagen)</label>
-          <input type="file" name="portada" accept="image/*">
           <?php if ($revista['portada_url']): ?>
-            <div class="file-current">Actual: <a href="../<?= htmlspecialchars($revista['portada_url']) ?>" target="_blank">ver portada</a></div>
+            <div class="file-actual">
+              <span class="file-actual-info">✅ <a href="../<?= htmlspecialchars($revista['portada_url']) ?>" target="_blank">Ver portada actual</a></span>
+              <a class="btn-eliminar-archivo" href="?id=<?= $id ?>&eliminar_portada=1" onclick="return confirm('¿Eliminar la portada?')">
+                <i class="ti ti-trash" style="font-size:12px"></i> Eliminar portada
+              </a>
+            </div>
+            <div style="margin-top:8px;font-size:12px;color:#aaa;">Sube una nueva para reemplazarla:</div>
           <?php else: ?>
-            <div class="file-current">Sin portada — sube una imagen</div>
+            <div class="no-archivo">📷 Sin portada — sube una imagen</div>
           <?php endif; ?>
+          <input type="file" name="portada" accept="image/*" style="margin-top:8px;">
 
           <label>Archivo PDF</label>
-          <input type="file" name="pdf" accept="application/pdf">
           <?php if ($revista['pdf_url']): ?>
-            <div class="file-current">Actual: <a href="../<?= htmlspecialchars($revista['pdf_url']) ?>" target="_blank">ver PDF</a></div>
+            <div class="file-actual">
+              <span class="file-actual-info">✅ <a href="../<?= htmlspecialchars($revista['pdf_url']) ?>" target="_blank">Ver PDF actual</a></span>
+              <a class="btn-eliminar-archivo" href="?id=<?= $id ?>&eliminar_pdf=1" onclick="return confirm('¿Eliminar el PDF?')">
+                <i class="ti ti-trash" style="font-size:12px"></i> Eliminar PDF
+              </a>
+            </div>
+            <div style="margin-top:8px;font-size:12px;color:#aaa;">Sube un nuevo PDF para reemplazarlo:</div>
           <?php else: ?>
-            <div class="file-current">Sin PDF — sube el archivo</div>
+            <div class="no-archivo">📄 Sin PDF — sube el archivo</div>
           <?php endif; ?>
+          <input type="file" name="pdf" accept="application/pdf" style="margin-top:8px;">
 
           <button type="submit" class="btn-submit">Guardar cambios</button>
         </form>
@@ -264,15 +295,13 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
           $badge = match($revista['estado']) { 'publicada' => 'badge-pub', 'borrador' => 'badge-dra', default => 'badge-arc' };
         ?>
         <span class="badge <?= $badge ?>"><?= $revista['estado'] ?></span>
-        <div class="preview-pdf">
-          <?php if ($revista['pdf_url']): ?>
-            <a class="btn-ver-pdf" href="../<?= htmlspecialchars($revista['pdf_url']) ?>" target="_blank">
-              <i class="ti ti-file-text" aria-hidden="true"></i> Ver PDF actual
-            </a>
-          <?php else: ?>
-            <div class="no-pdf">📭 Sin PDF todavía</div>
-          <?php endif; ?>
-        </div>
+        <?php if ($revista['pdf_url']): ?>
+          <a class="btn-ver-pdf" href="../<?= htmlspecialchars($revista['pdf_url']) ?>" target="_blank">
+            <i class="ti ti-file-text" aria-hidden="true"></i> Ver PDF actual
+          </a>
+        <?php else: ?>
+          <div class="no-pdf">📭 Sin PDF todavía</div>
+        <?php endif; ?>
       </div>
     </div>
   </div>
