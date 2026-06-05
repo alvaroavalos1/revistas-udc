@@ -429,7 +429,7 @@ function tarjeta($rev, $lang, $mostrar_visitas = false) {
     $pdf    = htmlspecialchars($rev['pdf_url'] ?? '');
     $id     = $rev['revista_id'];
     ob_start(); ?>
-    <div class="card" onclick="abrirPDF('<?= $pdf ?>', '<?= addslashes($titulo) ?>', <?= $id ?>)">
+    <div class="card" onclick="window.location='revista.php?id=<?= $id ?>&lang=<?= $lang ?>'">
       <div class="card-img">
         <?php if (!empty($rev['portada_url'])): ?>
           <img src="../<?= htmlspecialchars($rev['portada_url']) ?>" alt="Portada">
