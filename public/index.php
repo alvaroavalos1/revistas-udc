@@ -5,19 +5,34 @@ $lang = isset($_GET['lang']) && $_GET['lang'] === 'en' ? 'en' : 'es';
 $cat  = isset($_GET['cat']) ? (int)$_GET['cat'] : null;
 
 if (isset($_GET['visita'])) {
-    $vid = (int)$_GET['visita'];
-    $pdo->prepare('UPDATE revistas SET visitas = visitas + 1 WHERE id = ?')->execute([$vid]);
+    try {
+        $vid = (int)$_GET['visita'];
+        $pdo->prepare('UPDATE revistas SET visitas = visitas + 1 WHERE id = ?')->execute([$vid]);
+    } catch (PDOException $e) { /* silencioso */ }
     echo 'ok'; exit;
 }
 
 // Búsqueda
 $busqueda = trim($_GET['q'] ?? '');
 
+// Defaults en caso de error de BD
+$ui             = [];
+$categorias     = [];
+$total_revistas = 0;
+$conteos        = [];
+$mas_visitadas  = [];
+$recientes      = [];
+$resultados_busqueda = [];
+$revistas_cat   = [];
+$cat_actual     = null;
+$db_ok          = false;
+
+try {
 $stmt = $pdo->query('SELECT clave, texto_es, texto_en FROM ui_textos');
-$ui   = [];
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $ui[$row['clave']] = $lang === 'en' ? $row['texto_en'] : $row['texto_es'];
 }
+$db_ok = true;
 
 $categorias     = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY nombre_es')->fetchAll(PDO::FETCH_ASSOC);
 $total_revistas = $pdo->query('SELECT COUNT(*) FROM revistas WHERE estado = "publicada"')->fetchColumn();
@@ -52,7 +67,6 @@ if ($lang === 'en') {
 }
 
 // Búsqueda
-$resultados_busqueda = [];
 if ($busqueda) {
     if ($lang === 'en') {
         $stmt_b = $pdo->prepare('
@@ -72,8 +86,6 @@ if ($busqueda) {
 }
 
 // Revistas por categoría
-$revistas_cat = [];
-$cat_actual   = null;
 if ($cat) {
     $stmt_cat = $pdo->prepare('SELECT * FROM categorias WHERE id = ?');
     $stmt_cat->execute([$cat]);
@@ -93,6 +105,7 @@ if ($cat) {
     $stmt_rev->execute([$cat]);
     $revistas_cat = $stmt_rev->fetchAll(PDO::FETCH_ASSOC);
 }
+} catch (PDOException $e) { /* usa defaults vacíos declarados arriba */ }
 
 $iconos_cat = ['ti-rocket', 'ti-chart-bar', 'ti-building', 'ti-cpu', 'ti-heart', 'ti-book', 'ti-flask', 'ti-music'];
 $colores_cat = ['#EBF3FB', '#EAF3DE', '#FAEEDA', '#EEEDFE', '#FEF2F2', '#E1F5EE', '#F0FFF4', '#FFF5F5'];

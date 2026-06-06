@@ -22,6 +22,7 @@ try {
     $pdo = new PDO($dsn, $user, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
-    die(json_encode(['error' => 'Error de conexión: ' . $e->getMessage()]));
+    http_response_code(503);
+    die('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Error</title></head><body><p>Servicio temporalmente no disponible.</p></body></html>');
 }
 ?>
