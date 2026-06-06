@@ -1,14 +1,24 @@
 <?php
-// Detectar si estamos en local o en el servidor
-if ($_SERVER['HTTP_HOST'] === 'localhost' || $_SERVER['HTTP_HOST'] === '127.0.0.1') {
-    // Configuración LOCAL (XAMPP)
+if (getenv('MYSQL_HOST')) {
+    // Railway — env vars del plugin MySQL
+    $host     = getenv('MYSQL_HOST');
+    $port     = getenv('MYSQL_PORT') ?: '3306';
+    $dbname   = getenv('MYSQL_DATABASE');
+    $user     = getenv('MYSQL_USER');
+    $password = getenv('MYSQL_PASSWORD');
+} elseif (isset($_SERVER['HTTP_HOST']) && (
+    $_SERVER['HTTP_HOST'] === 'localhost' ||
+    str_starts_with($_SERVER['HTTP_HOST'], '127.0.0.1') ||
+    str_starts_with($_SERVER['HTTP_HOST'], 'localhost:')
+)) {
+    // Local XAMPP
     $host     = 'localhost';
     $port     = '3307';
     $dbname   = 'plataforma_revistas';
     $user     = 'root';
     $password = 'root';
 } else {
-    // Configuración SERVIDOR (InfinityFree)
+    // InfinityFree (fallback)
     $host     = 'sql305.infinityfree.com';
     $dbname   = 'if0_42050746_revistas';
     $user     = 'if0_42050746';

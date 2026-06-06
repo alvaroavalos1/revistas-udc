@@ -1,0 +1,7 @@
+# Force LF for files that run in Linux containers
+docker/start.sh text eol=lf
+Dockerfile text eol=lf
+docker/apache.conf text eol=lf
+
+# Windows-style for everything else
+* text=auto
