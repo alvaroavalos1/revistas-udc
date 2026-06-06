@@ -1,11 +1,13 @@
 # Bloquear listado de directorios
 Options -Indexes
 
-# Headers de seguridad
-Header always set X-Content-Type-Options "nosniff"
-Header always set X-Frame-Options "SAMEORIGIN"
-Header always set X-XSS-Protection "1; mode=block"
-Header always set Referrer-Policy "strict-origin-when-cross-origin"
+# Headers de seguridad (solo si mod_headers está disponible)
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
 
 # Ocultar versión de servidor
 ServerSignature Off
