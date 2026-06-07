@@ -2,6 +2,8 @@
 docker/start.sh text eol=lf
 Dockerfile text eol=lf
 docker/apache.conf text eol=lf
+docker/nginx.conf text eol=lf
+docker/supervisord.conf text eol=lf
 
 # Windows-style for everything else
 * text=auto

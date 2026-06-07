@@ -1,11 +1,13 @@
-FROM php:8.2-apache
+FROM php:8.2-fpm
 
-RUN docker-php-ext-install pdo pdo_mysql \
-    && rm -f /etc/apache2/mods-enabled/mpm_*.load \
-             /etc/apache2/mods-enabled/mpm_*.conf \
-    && a2enmod mpm_prefork rewrite headers
+RUN docker-php-ext-install pdo pdo_mysql
 
-COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends nginx supervisor \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY docker/nginx.conf /etc/nginx/sites-available/default
+COPY docker/supervisord.conf /etc/supervisor/conf.d/app.conf
 COPY . /var/www/html/
 RUN chown -R www-data:www-data /var/www/html
 
