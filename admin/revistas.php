@@ -268,5 +268,14 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
   </div>
 </div>
 
+<script>
+const modal = document.getElementById('modal');
+// Cerrar al hacer clic en el fondo oscuro
+modal.addEventListener('click', function(e) { if (e.target === modal) modal.classList.remove('open'); });
+// Cerrar con ESC
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') modal.classList.remove('open'); });
+// Cerrar si el navegador restaura la página desde bfcache (back/forward)
+window.addEventListener('pageshow', function(e) { if (e.persisted) modal.classList.remove('open'); });
+</script>
 </body>
 </html>
