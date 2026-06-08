@@ -16,4 +16,6 @@ RUN chown -R www-data:www-data /var/www/html
 COPY docker/start.sh /start.sh
 RUN chmod +x /start.sh
 
+EXPOSE 8080
+
 CMD ["/start.sh"]
