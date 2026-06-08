@@ -40,18 +40,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($_FILES['portada']['name'])) {
         $ext = strtolower(pathinfo($_FILES['portada']['name'], PATHINFO_EXTENSION));
         $key = 'portadas/portada_' . uniqid() . '.' . $ext;
-        $portada_url = upload_to_r2($_FILES['portada']['tmp_name'], $key, $_FILES['portada']['type']);
+        $url = upload_to_r2($_FILES['portada']['tmp_name'], $key, $_FILES['portada']['type']);
+        $portada_url = $url ?: 'data:' . $_FILES['portada']['type'] . ';base64,' . base64_encode(file_get_contents($_FILES['portada']['tmp_name']));
     }
 
-    $pdf_url = null;
+    $pdf_url  = null;
+    $pdf_blob = null;
     if (!empty($_FILES['pdf']['name'])) {
-        $key = 'pdfs/revista_' . uniqid() . '.pdf';
+        $key     = 'pdfs/revista_' . uniqid() . '.pdf';
         $pdf_url = upload_to_r2($_FILES['pdf']['tmp_name'], $key, 'application/pdf');
+        if (!$pdf_url) {
+            $pdf_blob = file_get_contents($_FILES['pdf']['tmp_name']);
+        }
     }
 
     if ($titulo && $categoria) {
-        $stmt = $pdo->prepare('INSERT INTO revistas (categoria_id, subida_por, titulo, descripcion, portada_url, pdf_url, estado, publicada_en) VALUES (?,?,?,?,?,?,?,?)');
-        $stmt->execute([$categoria, $_SESSION['usuario_id'], $titulo, $descripcion, $portada_url, $pdf_url, $estado, $estado === 'publicada' ? date('Y-m-d H:i:s') : null]);
+        $stmt = $pdo->prepare('INSERT INTO revistas (categoria_id, subida_por, titulo, descripcion, portada_url, pdf_url, pdf_blob, estado, publicada_en) VALUES (?,?,?,?,?,?,?,?,?)');
+        $stmt->execute([$categoria, $_SESSION['usuario_id'], $titulo, $descripcion, $portada_url, $pdf_url, $pdf_blob, $estado, $estado === 'publicada' ? date('Y-m-d H:i:s') : null]);
+        if ($pdf_blob !== null) {
+            $new_id = (int)$pdo->lastInsertId();
+            $pdo->prepare('UPDATE revistas SET pdf_url = ? WHERE id = ?')
+                ->execute(['public/ver_pdf.php?id=' . $new_id, $new_id]);
+        }
         $mensaje = 'Revista guardada correctamente';
     } else {
         $error = 'El título y la categoría son obligatorios';

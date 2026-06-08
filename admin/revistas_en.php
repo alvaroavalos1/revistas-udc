@@ -46,22 +46,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($_FILES['portada']['name'])) {
             $ext = strtolower(pathinfo($_FILES['portada']['name'], PATHINFO_EXTENSION));
             $key = 'portadas/portada_en_' . uniqid() . '.' . $ext;
-            $portada_url = upload_to_r2($_FILES['portada']['tmp_name'], $key, $_FILES['portada']['type']);
+            $url = upload_to_r2($_FILES['portada']['tmp_name'], $key, $_FILES['portada']['type']);
+            $portada_url = $url ?: 'data:' . $_FILES['portada']['type'] . ';base64,' . base64_encode(file_get_contents($_FILES['portada']['tmp_name']));
         }
 
-        $pdf_url = null;
+        $pdf_url  = null;
+        $pdf_blob = null;
         if (!empty($_FILES['pdf']['name'])) {
-            $key = 'pdfs/revista_en_' . uniqid() . '.pdf';
+            $key     = 'pdfs/revista_en_' . uniqid() . '.pdf';
             $pdf_url = upload_to_r2($_FILES['pdf']['tmp_name'], $key, 'application/pdf');
+            if (!$pdf_url) {
+                $pdf_blob = file_get_contents($_FILES['pdf']['tmp_name']);
+            }
         }
 
         if ($titulo && $revista_id) {
-            $stmt = $pdo->prepare('INSERT INTO revistas_en (revista_id, subida_por, titulo, descripcion, portada_url, pdf_url, estado, publicada_en) VALUES (?,?,?,?,?,?,?,?)');
+            $stmt = $pdo->prepare('INSERT INTO revistas_en (revista_id, subida_por, titulo, descripcion, portada_url, pdf_url, pdf_blob, estado, publicada_en) VALUES (?,?,?,?,?,?,?,?,?)');
             $stmt->execute([
                 $revista_id, $_SESSION['usuario_id'], $titulo, $descripcion,
-                $portada_url, $pdf_url, $estado,
+                $portada_url, $pdf_url, $pdf_blob, $estado,
                 $estado === 'publicada' ? date('Y-m-d H:i:s') : null
             ]);
+            if ($pdf_blob !== null) {
+                $pdo->prepare('UPDATE revistas_en SET pdf_url = ? WHERE revista_id = ?')
+                    ->execute(['public/ver_pdf.php?id=' . $revista_id . '&lang=en', $revista_id]);
+            }
             $mensaje = 'Versión en inglés guardada correctamente';
         } else {
             $error = 'El título y la revista son obligatorios';

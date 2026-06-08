@@ -5,7 +5,8 @@ if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
 
 function url_asset(?string $path): string {
     if (!$path) return '';
-    return str_starts_with($path, 'http') ? $path : '../' . $path;
+    if (str_starts_with($path, 'http') || str_starts_with($path, 'data:')) return $path;
+    return '../' . $path;
 }
 
 function _r2_client(): ?\Aws\S3\S3Client {

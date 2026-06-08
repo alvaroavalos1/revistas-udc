@@ -32,7 +32,7 @@ if (isset($_GET['eliminar_pdf'])) {
     $row->execute([$id]);
     $old = $row->fetchColumn();
     if ($old) delete_from_r2($old);
-    $pdo->prepare('UPDATE revistas SET pdf_url = NULL WHERE id = ?')->execute([$id]);
+    $pdo->prepare('UPDATE revistas SET pdf_url = NULL, pdf_blob = NULL WHERE id = ?')->execute([$id]);
     header('Location: editar_revista.php?id=' . $id . '&msg=pdf_eliminado');
     exit;
 }
@@ -71,13 +71,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($new_url) {
                 if ($revista['portada_url']) delete_from_r2($revista['portada_url']);
                 $portada_url = $new_url;
+            } else {
+                $portada_url = 'data:' . $_FILES['portada']['type'] . ';base64,' . base64_encode(file_get_contents($_FILES['portada']['tmp_name']));
             }
         } else {
             $error = 'La portada debe ser una imagen (jpg, png, gif, webp)';
         }
     }
 
-    $pdf_url = $revista['pdf_url'];
+    $pdf_url      = $revista['pdf_url'];
+    $new_pdf_blob = null;
+    $update_blob  = false;
     if (!empty($_FILES['pdf']['name']) && !$error) {
         $ext_pdf = strtolower(pathinfo($_FILES['pdf']['name'], PATHINFO_EXTENSION));
         if ($ext_pdf === 'pdf') {
@@ -85,7 +89,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $new_url = upload_to_r2($_FILES['pdf']['tmp_name'], $key, 'application/pdf');
             if ($new_url) {
                 if ($revista['pdf_url']) delete_from_r2($revista['pdf_url']);
-                $pdf_url = $new_url;
+                $pdf_url     = $new_url;
+                $update_blob = true;
+            } else {
+                $new_pdf_blob = file_get_contents($_FILES['pdf']['tmp_name']);
+                $pdf_url      = 'public/ver_pdf.php?id=' . $id;
+                $update_blob  = true;
             }
         } else {
             $error = 'El archivo debe ser un PDF';
@@ -104,6 +113,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $estado === 'publicada' ? date('Y-m-d H:i:s') : null,
             $id
         ]);
+        if ($update_blob) {
+            $pdo->prepare('UPDATE revistas SET pdf_blob = ? WHERE id = ?')->execute([$new_pdf_blob, $id]);
+        }
         $mensaje = 'Revista actualizada correctamente';
 
         $stmt2 = $pdo->prepare('SELECT * FROM revistas WHERE id = ?');
