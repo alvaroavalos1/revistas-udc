@@ -200,7 +200,7 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
       <div class="card">
         <div class="card-img">
           <?php if ($r['portada_url']): ?>
-            <img src="<?= htmlspecialchars(url_asset($r['portada_url'])) ?>" alt="Portada">
+            <img src="<?= htmlspecialchars(url_asset($r['portada_url'])) ?>" alt="Portada" onerror="this.parentElement.innerHTML='📄'">
           <?php else: ?>
             📄
           <?php endif; ?>
