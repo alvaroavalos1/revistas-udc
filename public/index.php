@@ -5,10 +5,12 @@ $lang = isset($_GET['lang']) && $_GET['lang'] === 'en' ? 'en' : 'es';
 $cat  = isset($_GET['cat']) ? (int)$_GET['cat'] : null;
 
 if (isset($_GET['visita'])) {
-    try {
-        $vid = (int)$_GET['visita'];
-        $pdo->prepare('UPDATE revistas SET visitas = visitas + 1 WHERE id = ?')->execute([$vid]);
-    } catch (PDOException $e) { /* silencioso */ }
+    if ($pdo !== null) {
+        try {
+            $vid = (int)$_GET['visita'];
+            $pdo->prepare('UPDATE revistas SET visitas = visitas + 1 WHERE id = ?')->execute([$vid]);
+        } catch (\Throwable $e) { /* silencioso */ }
+    }
     echo 'ok'; exit;
 }
 
@@ -27,6 +29,7 @@ $revistas_cat   = [];
 $cat_actual     = null;
 $db_ok          = false;
 
+if ($pdo !== null) {
 try {
 $stmt = $pdo->query('SELECT clave, texto_es, texto_en FROM ui_textos');
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -105,7 +108,8 @@ if ($cat) {
     $stmt_rev->execute([$cat]);
     $revistas_cat = $stmt_rev->fetchAll(PDO::FETCH_ASSOC);
 }
-} catch (PDOException $e) { /* usa defaults vacíos declarados arriba */ }
+} catch (\Throwable $e) { /* usa defaults vacíos declarados arriba */ }
+}
 
 $iconos_cat = ['ti-rocket', 'ti-chart-bar', 'ti-building', 'ti-cpu', 'ti-heart', 'ti-book', 'ti-flask', 'ti-music'];
 $colores_cat = ['#EBF3FB', '#EAF3DE', '#FAEEDA', '#EEEDFE', '#FEF2F2', '#E1F5EE', '#F0FFF4', '#FFF5F5'];

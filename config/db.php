@@ -17,6 +17,12 @@ if (isset($_SERVER['HTTP_HOST']) && (
     $dbname   = getenv('MYSQLDATABASE');
     $user     = getenv('MYSQLUSER');
     $password = getenv('MYSQLPASSWORD');
+
+    if (!$host || !$dbname) {
+        // Plugin MySQL no conectado todavía — degradación graceful
+        $pdo = null;
+        return;
+    }
 }
 
 try {
