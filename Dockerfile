@@ -8,6 +8,7 @@ RUN apt-get update \
 
 RUN rm -f /etc/nginx/sites-enabled/default
 
+COPY docker/php-sessions.ini /usr/local/etc/php/conf.d/sessions.ini
 COPY docker/nginx.conf /etc/nginx/conf.d/app.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/app.conf
 COPY . /var/www/html/
