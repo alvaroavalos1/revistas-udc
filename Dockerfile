@@ -3,10 +3,9 @@ FROM php:8.2-fpm
 RUN docker-php-ext-install pdo pdo_mysql
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends nginx supervisor gettext-base \
+    && apt-get install -y --no-install-recommends nginx supervisor \
     && rm -rf /var/lib/apt/lists/*
 
-# Usar conf.d en lugar de sites-enabled para evitar problemas con symlinks
 RUN rm -f /etc/nginx/sites-enabled/default
 
 COPY docker/nginx.conf /etc/nginx/conf.d/app.conf.template
