@@ -8,7 +8,7 @@ RUN apt-get update \
 
 RUN rm -f /etc/nginx/sites-enabled/default
 
-COPY docker/nginx.conf /etc/nginx/conf.d/app.conf.template
+COPY docker/nginx.conf /etc/nginx/conf.d/app.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/app.conf
 COPY . /var/www/html/
 RUN chown -R www-data:www-data /var/www/html

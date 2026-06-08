@@ -1,11 +1,7 @@
 #!/bin/bash
 set -e
 
-PORT=${PORT:-80}
-echo "[start] PORT=${PORT}"
-
-sed "s|NGINX_PORT|${PORT}|g" /etc/nginx/conf.d/app.conf.template \
-    > /etc/nginx/conf.d/app.conf
+echo "[start] PORT=${PORT:-8080} (nginx hardcoded to 8080)"
 
 nginx -t
 echo "[start] nginx config OK, starting services"
