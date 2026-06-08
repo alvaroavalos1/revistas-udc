@@ -1,5 +1,6 @@
 <?php
 require_once '../config/db.php';
+assert($pdo instanceof PDO);
 
 $lang = isset($_GET['lang']) && $_GET['lang'] === 'en' ? 'en' : 'es';
 $id   = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -240,7 +241,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
   <div class="article">
     <div class="article-cover">
       <?php if ($revista['portada_url']): ?>
-        <img src="../<?= htmlspecialchars($revista['portada_url']) ?>" alt="Portada">
+        <img src="<?= htmlspecialchars(str_starts_with($revista['portada_url'], 'http') ? $revista['portada_url'] : '../' . $revista['portada_url']) ?>" alt="Portada">
       <?php else: ?>
         📄
       <?php endif; ?>
@@ -261,10 +262,10 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
 
       <div class="article-actions">
         <?php if ($revista['pdf_url']): ?>
-          <button class="btn-leer" onclick="abrirPDF('../<?= htmlspecialchars($revista['pdf_url']) ?>', '<?= addslashes(htmlspecialchars($revista['titulo'])) ?>')">
+          <button class="btn-leer" onclick="abrirPDF('<?= htmlspecialchars(str_starts_with($revista['pdf_url'], 'http') ? $revista['pdf_url'] : '../' . $revista['pdf_url']) ?>', '<?= addslashes(htmlspecialchars($revista['titulo'])) ?>')">
             📖 <?= $lang === 'es' ? 'Leer revista' : 'Read magazine' ?>
           </button>
-          <a class="btn-descargar" href="../<?= htmlspecialchars($revista['pdf_url']) ?>" download>
+          <a class="btn-descargar" href="<?= htmlspecialchars(str_starts_with($revista['pdf_url'], 'http') ? $revista['pdf_url'] : '../' . $revista['pdf_url']) ?>" download>
             ⬇️ <?= $lang === 'es' ? 'Descargar PDF' : 'Download PDF' ?>
           </a>
         <?php else: ?>
@@ -289,7 +290,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
             <a class="rel-item" href="revista.php?id=<?= $rel['revista_id'] ?>&lang=<?= $lang ?>">
               <div class="rel-img">
                 <?php if (!empty($rel['portada_url'])): ?>
-                  <img src="../<?= htmlspecialchars($rel['portada_url']) ?>" alt="">
+                  <img src="<?= htmlspecialchars(str_starts_with($rel['portada_url'], 'http') ? $rel['portada_url'] : '../' . $rel['portada_url']) ?>" alt="">
                 <?php else: ?>
                   📄
                 <?php endif; ?>

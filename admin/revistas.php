@@ -1,6 +1,8 @@
 <?php
 require_once '../config/session.php';
 require_once '../config/db.php';
+assert($pdo instanceof PDO);
+require_once '../config/r2.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ../public/login.php');
@@ -36,19 +38,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $portada_url = null;
     if (!empty($_FILES['portada']['name'])) {
-        $ext      = pathinfo($_FILES['portada']['name'], PATHINFO_EXTENSION);
-        $filename = 'portada_' . uniqid() . '.' . $ext;
-        if (move_uploaded_file($_FILES['portada']['tmp_name'], '../uploads/' . $filename)) {
-            $portada_url = 'uploads/' . $filename;
-        }
+        $ext = strtolower(pathinfo($_FILES['portada']['name'], PATHINFO_EXTENSION));
+        $key = 'portadas/portada_' . uniqid() . '.' . $ext;
+        $portada_url = upload_to_r2($_FILES['portada']['tmp_name'], $key, $_FILES['portada']['type']);
     }
 
     $pdf_url = null;
     if (!empty($_FILES['pdf']['name'])) {
-        $filename_pdf = 'revista_' . uniqid() . '.pdf';
-        if (move_uploaded_file($_FILES['pdf']['tmp_name'], '../uploads/' . $filename_pdf)) {
-            $pdf_url = 'uploads/' . $filename_pdf;
-        }
+        $key = 'pdfs/revista_' . uniqid() . '.pdf';
+        $pdf_url = upload_to_r2($_FILES['pdf']['tmp_name'], $key, 'application/pdf');
     }
 
     if ($titulo && $categoria) {
@@ -202,7 +200,7 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
       <div class="card">
         <div class="card-img">
           <?php if ($r['portada_url']): ?>
-            <img src="../<?= htmlspecialchars($r['portada_url']) ?>" alt="Portada">
+            <img src="<?= htmlspecialchars(url_asset($r['portada_url'])) ?>" alt="Portada">
           <?php else: ?>
             📄
           <?php endif; ?>
@@ -225,7 +223,7 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
               <a class="btn-xs gold" href="revistas_en.php">+ EN</a>
             <?php endif; ?>
             <?php if ($r['pdf_url']): ?>
-              <a class="btn-xs" href="../<?= htmlspecialchars($r['pdf_url']) ?>" target="_blank">Ver PDF</a>
+              <a class="btn-xs" href="<?= htmlspecialchars(url_asset($r['pdf_url'])) ?>" target="_blank">Ver PDF</a>
             <?php endif; ?>
             <a class="btn-xs" href="editar_revista.php?id=<?= $r['id'] ?>"><i class="ti ti-edit" style="font-size:11px"></i> Editar</a>
             <a class="btn-xs danger" href="?eliminar=<?= $r['id'] ?>" onclick="return confirm('¿Eliminar esta revista?')">Eliminar</a>

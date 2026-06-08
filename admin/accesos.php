@@ -1,6 +1,7 @@
 <?php
 require_once '../config/session.php';
 require_once '../config/db.php';
+assert($pdo instanceof PDO);
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ../public/login.php');

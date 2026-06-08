@@ -1,6 +1,8 @@
 <?php
 require_once '../config/session.php';
 require_once '../config/db.php';
+assert($pdo instanceof PDO);
+require_once '../config/r2.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ../public/login.php');
@@ -15,16 +17,22 @@ if (!$id) {
 
 // Eliminar portada
 if (isset($_GET['eliminar_portada'])) {
-    $stmt = $pdo->prepare('UPDATE revistas SET portada_url = NULL WHERE id = ?');
-    $stmt->execute([$id]);
+    $row = $pdo->prepare('SELECT portada_url FROM revistas WHERE id = ?');
+    $row->execute([$id]);
+    $old = $row->fetchColumn();
+    if ($old) delete_from_r2($old);
+    $pdo->prepare('UPDATE revistas SET portada_url = NULL WHERE id = ?')->execute([$id]);
     header('Location: editar_revista.php?id=' . $id . '&msg=portada_eliminada');
     exit;
 }
 
 // Eliminar PDF
 if (isset($_GET['eliminar_pdf'])) {
-    $stmt = $pdo->prepare('UPDATE revistas SET pdf_url = NULL WHERE id = ?');
-    $stmt->execute([$id]);
+    $row = $pdo->prepare('SELECT pdf_url FROM revistas WHERE id = ?');
+    $row->execute([$id]);
+    $old = $row->fetchColumn();
+    if ($old) delete_from_r2($old);
+    $pdo->prepare('UPDATE revistas SET pdf_url = NULL WHERE id = ?')->execute([$id]);
     header('Location: editar_revista.php?id=' . $id . '&msg=pdf_eliminado');
     exit;
 }
@@ -55,12 +63,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $portada_url = $revista['portada_url'];
     if (!empty($_FILES['portada']['name'])) {
-        $ext     = pathinfo($_FILES['portada']['name'], PATHINFO_EXTENSION);
+        $ext     = strtolower(pathinfo($_FILES['portada']['name'], PATHINFO_EXTENSION));
         $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-        if (in_array(strtolower($ext), $allowed)) {
-            $filename = 'portada_' . uniqid() . '.' . $ext;
-            if (move_uploaded_file($_FILES['portada']['tmp_name'], '../uploads/' . $filename)) {
-                $portada_url = 'uploads/' . $filename;
+        if (in_array($ext, $allowed)) {
+            $key     = 'portadas/portada_' . uniqid() . '.' . $ext;
+            $new_url = upload_to_r2($_FILES['portada']['tmp_name'], $key, $_FILES['portada']['type']);
+            if ($new_url) {
+                if ($revista['portada_url']) delete_from_r2($revista['portada_url']);
+                $portada_url = $new_url;
             }
         } else {
             $error = 'La portada debe ser una imagen (jpg, png, gif, webp)';
@@ -69,11 +79,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $pdf_url = $revista['pdf_url'];
     if (!empty($_FILES['pdf']['name']) && !$error) {
-        $ext_pdf = pathinfo($_FILES['pdf']['name'], PATHINFO_EXTENSION);
-        if (strtolower($ext_pdf) === 'pdf') {
-            $filename_pdf = 'revista_' . uniqid() . '.pdf';
-            if (move_uploaded_file($_FILES['pdf']['tmp_name'], '../uploads/' . $filename_pdf)) {
-                $pdf_url = 'uploads/' . $filename_pdf;
+        $ext_pdf = strtolower(pathinfo($_FILES['pdf']['name'], PATHINFO_EXTENSION));
+        if ($ext_pdf === 'pdf') {
+            $key     = 'pdfs/revista_' . uniqid() . '.pdf';
+            $new_url = upload_to_r2($_FILES['pdf']['tmp_name'], $key, 'application/pdf');
+            if ($new_url) {
+                if ($revista['pdf_url']) delete_from_r2($revista['pdf_url']);
+                $pdf_url = $new_url;
             }
         } else {
             $error = 'El archivo debe ser un PDF';
@@ -242,7 +254,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
           <label>Portada (imagen)</label>
           <?php if ($revista['portada_url']): ?>
             <div class="file-actual">
-              <span class="file-actual-info">✅ <a href="../<?= htmlspecialchars($revista['portada_url']) ?>" target="_blank">Ver portada actual</a></span>
+              <span class="file-actual-info">✅ <a href="<?= htmlspecialchars(url_asset($revista['portada_url'])) ?>" target="_blank">Ver portada actual</a></span>
               <a class="btn-eliminar-archivo" href="?id=<?= $id ?>&eliminar_portada=1" onclick="return confirm('¿Eliminar la portada?')">
                 <i class="ti ti-trash" style="font-size:12px"></i> Eliminar portada
               </a>
@@ -256,7 +268,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
           <label>Archivo PDF</label>
           <?php if ($revista['pdf_url']): ?>
             <div class="file-actual">
-              <span class="file-actual-info">✅ <a href="../<?= htmlspecialchars($revista['pdf_url']) ?>" target="_blank">Ver PDF actual</a></span>
+              <span class="file-actual-info">✅ <a href="<?= htmlspecialchars(url_asset($revista['pdf_url'])) ?>" target="_blank">Ver PDF actual</a></span>
               <a class="btn-eliminar-archivo" href="?id=<?= $id ?>&eliminar_pdf=1" onclick="return confirm('¿Eliminar el PDF?')">
                 <i class="ti ti-trash" style="font-size:12px"></i> Eliminar PDF
               </a>
@@ -278,7 +290,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
       <div class="preview-body">
         <div class="preview-img">
           <?php if ($revista['portada_url']): ?>
-            <img src="../<?= htmlspecialchars($revista['portada_url']) ?>" alt="Portada">
+            <img src="<?= htmlspecialchars(url_asset($revista['portada_url'])) ?>" alt="Portada">
           <?php else: ?>
             📄
           <?php endif; ?>
@@ -296,7 +308,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
         ?>
         <span class="badge <?= $badge ?>"><?= $revista['estado'] ?></span>
         <?php if ($revista['pdf_url']): ?>
-          <a class="btn-ver-pdf" href="../<?= htmlspecialchars($revista['pdf_url']) ?>" target="_blank">
+          <a class="btn-ver-pdf" href="<?= htmlspecialchars(url_asset($revista['pdf_url'])) ?>" target="_blank">
             <i class="ti ti-file-text" aria-hidden="true"></i> Ver PDF actual
           </a>
         <?php else: ?>

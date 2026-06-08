@@ -1,5 +1,6 @@
 <?php
 require_once '../config/db.php';
+assert($pdo instanceof PDO);
 
 $lang = isset($_GET['lang']) && $_GET['lang'] === 'en' ? 'en' : 'es';
 $cat  = isset($_GET['cat']) ? (int)$_GET['cat'] : null;
@@ -447,7 +448,7 @@ function tarjeta($rev, $lang, $mostrar_visitas = false) {
     <div class="card" onclick="window.location='revista.php?id=<?= $id ?>&lang=<?= $lang ?>'">
       <div class="card-img">
         <?php if (!empty($rev['portada_url'])): ?>
-          <img src="../<?= htmlspecialchars($rev['portada_url']) ?>" alt="Portada">
+          <img src="<?= htmlspecialchars(str_starts_with($rev['portada_url'], 'http') ? $rev['portada_url'] : '../' . $rev['portada_url']) ?>" alt="Portada">
         <?php else: ?>
           &#x1F4C4;
         <?php endif; ?>

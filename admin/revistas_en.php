@@ -1,6 +1,8 @@
 <?php
 require_once '../config/session.php';
 require_once '../config/db.php';
+assert($pdo instanceof PDO);
+require_once '../config/r2.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ../public/login.php');
@@ -42,19 +44,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $portada_url = null;
         if (!empty($_FILES['portada']['name'])) {
-            $ext      = pathinfo($_FILES['portada']['name'], PATHINFO_EXTENSION);
-            $filename = 'portada_en_' . uniqid() . '.' . $ext;
-            if (move_uploaded_file($_FILES['portada']['tmp_name'], '../uploads/' . $filename)) {
-                $portada_url = 'uploads/' . $filename;
-            }
+            $ext = strtolower(pathinfo($_FILES['portada']['name'], PATHINFO_EXTENSION));
+            $key = 'portadas/portada_en_' . uniqid() . '.' . $ext;
+            $portada_url = upload_to_r2($_FILES['portada']['tmp_name'], $key, $_FILES['portada']['type']);
         }
 
         $pdf_url = null;
         if (!empty($_FILES['pdf']['name'])) {
-            $filename_pdf = 'revista_en_' . uniqid() . '.pdf';
-            if (move_uploaded_file($_FILES['pdf']['tmp_name'], '../uploads/' . $filename_pdf)) {
-                $pdf_url = 'uploads/' . $filename_pdf;
-            }
+            $key = 'pdfs/revista_en_' . uniqid() . '.pdf';
+            $pdf_url = upload_to_r2($_FILES['pdf']['tmp_name'], $key, 'application/pdf');
         }
 
         if ($titulo && $revista_id) {
@@ -226,7 +224,7 @@ $versiones = $pdo->query('
                 <a class="btn-xs" href="?id=<?= $v['id'] ?>&estado=borrador">Borrador</a>
               <?php endif; ?>
               <?php if ($v['pdf_url']): ?>
-                <a class="btn-xs" href="../<?= htmlspecialchars($v['pdf_url']) ?>" target="_blank">Ver PDF</a>
+                <a class="btn-xs" href="<?= htmlspecialchars(url_asset($v['pdf_url'])) ?>" target="_blank">Ver PDF</a>
               <?php endif; ?>
               <a class="btn-xs danger" href="?eliminar=<?= $v['id'] ?>" onclick="return confirm('¿Eliminar esta versión en inglés?')">Eliminar</a>
             </td>
