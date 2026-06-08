@@ -27,8 +27,13 @@ if (isset($_SERVER['HTTP_HOST']) && (
 
 try {
     $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
-    $pdo = new PDO($dsn, $user, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $options = [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    ];
+    if (!isset($_SERVER['HTTP_HOST']) || !str_starts_with($_SERVER['HTTP_HOST'], 'localhost')) {
+        $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+    }
+    $pdo = new PDO($dsn, $user, $password, $options);
 } catch (PDOException $e) {
     http_response_code(503);
     die('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Error</title></head><body><p>Servicio temporalmente no disponible.</p></body></html>');
