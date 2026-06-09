@@ -112,7 +112,18 @@ if ($cat) {
 } catch (\Throwable $e) { /* usa defaults vacíos declarados arriba */ }
 }
 
-$iconos_cat = ['ti-rocket', 'ti-chart-bar', 'ti-building', 'ti-cpu', 'ti-heart', 'ti-book', 'ti-flask', 'ti-music'];
+$emojis_cat = [
+    'Ciencias de la Salud'                          => '🏥',
+    'Ingenierías y Tecnología'                      => '⚙️',
+    'Ciencias Marítimas y del Mar'                  => '🌊',
+    'Ciencias Sociales y Derecho'                   => '⚖️',
+    'Humanidades, Artes y Educación'                => '🎨',
+    'Ciencias Exactas y Naturales'                  => '🔬',
+    'Administración y Negocios'                     => '💼',
+    'Institutos de Investigación Especializada'     => '🔭',
+    'Coordinaciones y Servicios Académicos'         => '🖥️',
+    'Gobierno Universitario y Normatividad'         => '🏛️',
+];
 $colores_cat = ['#EBF3FB', '#EAF3DE', '#FAEEDA', '#EEEDFE', '#FEF2F2', '#E1F5EE', '#F0FFF4', '#FFF5F5'];
 $colores_txt = ['#003B7A', '#3B6D11', '#856d00', '#5b21b6', '#B91C1C', '#0F6E56', '#276749', '#9B2C2C'];
 ?>
@@ -192,7 +203,7 @@ $colores_txt = ['#003B7A', '#3B6D11', '#856d00', '#5b21b6', '#B91C1C', '#0F6E56'
     .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 36px; }
     .cat-card { border-radius: 12px; padding: 16px; cursor: pointer; text-decoration: none; display: flex; flex-direction: column; gap: 8px; border: 1.5px solid transparent; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
     .cat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); border-color: rgba(0,0,0,0.08); }
-    .cat-card i { font-size: 24px; }
+    .cat-card .cat-emoji { font-size: 24px; line-height: 1; }
     .cat-card-name { font-size: 13px; font-weight: 500; }
     .cat-card-count { font-size: 11px; opacity: 0.7; }
 
@@ -392,15 +403,15 @@ $colores_txt = ['#003B7A', '#3B6D11', '#856d00', '#5b21b6', '#B91C1C', '#0F6E56'
     </div>
     <div class="cat-grid">
       <?php foreach ($categorias as $i => $c):
-        $idx   = $i % count($iconos_cat);
+        $idx   = $i % count($colores_cat);
         $color = $colores_cat[$idx];
         $txt   = $colores_txt[$idx];
-        $icono = $iconos_cat[$idx];
+        $emoji = $emojis_cat[$c['nombre_es']] ?? '📚';
         $total = $conteos[$c['id']] ?? 0;
         $nombre = $lang === 'en' ? $c['nombre_en'] : $c['nombre_es'];
       ?>
       <a class="cat-card" href="?lang=<?= $lang ?>&cat=<?= $c['id'] ?>" style="background:<?= $color ?>; color:<?= $txt ?>">
-        <i class="ti <?= $icono ?>" style="color:<?= $txt ?>" aria-hidden="true"></i>
+        <span class="cat-emoji" aria-hidden="true"><?= $emoji ?></span>
         <span class="cat-card-name"><?= htmlspecialchars($nombre) ?></span>
         <span class="cat-card-count"><?= $total ?> <?= $lang === 'es' ? 'revistas' : 'magazines' ?></span>
       </a>
