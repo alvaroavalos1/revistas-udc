@@ -226,6 +226,7 @@ $versiones = $pdo->query('
             </td>
             <td><span class="badge <?= $badge ?>"><?= $v['estado'] ?></span></td>
             <td>
+              <a class="btn-xs primary" href="editar_revista_en.php?id=<?= $v['id'] ?>">Editar</a>
               <?php if ($v['estado'] !== 'publicada'): ?>
                 <a class="btn-xs primary" href="?id=<?= $v['id'] ?>&estado=publicada">Publicar</a>
               <?php endif; ?>
