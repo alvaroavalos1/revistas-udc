@@ -448,7 +448,7 @@ function tarjeta($rev, $lang, $mostrar_visitas = false) {
     <div class="card" onclick="window.location='revista.php?id=<?= $id ?>&lang=<?= $lang ?>'">
       <div class="card-img">
         <?php if (!empty($rev['portada_url'])): ?>
-          <img src="<?= htmlspecialchars(str_starts_with($rev['portada_url'], 'http') ? $rev['portada_url'] : '../' . $rev['portada_url']) ?>" alt="Portada" onerror="this.outerHTML='<span style=\'font-size:42px\'>📄</span>'">
+          <img src="<?= htmlspecialchars((str_starts_with($rev['portada_url'], 'http') || str_starts_with($rev['portada_url'], 'data:')) ? $rev['portada_url'] : '../' . $rev['portada_url']) ?>" alt="Portada" onerror="this.outerHTML='<span style=\'font-size:42px\'>📄</span>'">
         <?php else: ?>
           &#x1F4C4;
         <?php endif; ?>

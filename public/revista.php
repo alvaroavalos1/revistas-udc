@@ -241,7 +241,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
   <div class="article">
     <div class="article-cover">
       <?php if ($revista['portada_url']): ?>
-        <img src="<?= htmlspecialchars(str_starts_with($revista['portada_url'], 'http') ? $revista['portada_url'] : '../' . $revista['portada_url']) ?>" alt="Portada" onerror="this.outerHTML='<span style=\'font-size:42px\'>📄</span>'">
+        <img src="<?= htmlspecialchars((str_starts_with($revista['portada_url'], 'http') || str_starts_with($revista['portada_url'], 'data:')) ? $revista['portada_url'] : '../' . $revista['portada_url']) ?>" alt="Portada" onerror="this.outerHTML='<span style=\'font-size:42px\'>📄</span>'">
       <?php else: ?>
         📄
       <?php endif; ?>
@@ -290,7 +290,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
             <a class="rel-item" href="revista.php?id=<?= $rel['revista_id'] ?>&lang=<?= $lang ?>">
               <div class="rel-img">
                 <?php if (!empty($rel['portada_url'])): ?>
-                  <img src="<?= htmlspecialchars(str_starts_with($rel['portada_url'], 'http') ? $rel['portada_url'] : '../' . $rel['portada_url']) ?>" alt="" onerror="this.outerHTML='<span style=\'font-size:42px\'>📄</span>'">
+                  <img src="<?= htmlspecialchars((str_starts_with($rel['portada_url'], 'http') || str_starts_with($rel['portada_url'], 'data:')) ? $rel['portada_url'] : '../' . $rel['portada_url']) ?>" alt="" onerror="this.outerHTML='<span style=\'font-size:42px\'>📄</span>'">
                 <?php else: ?>
                   📄
                 <?php endif; ?>
