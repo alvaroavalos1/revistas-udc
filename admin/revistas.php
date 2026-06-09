@@ -95,20 +95,20 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
     .sb-logo h2 { color: #fff; font-size: 15px; font-weight: 500; }
     .sb-logo p  { color: rgba(255,255,255,0.4); font-size: 11px; margin-top: 2px; padding-left: 16px; }
     .sb-section { padding: 16px 18px 4px; font-size: 10px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.06em; }
-    .sb-link { display: flex; align-items: center; gap: 10px; padding: 10px 18px; font-size: 13px; color: rgba(255,255,255,0.65); text-decoration: none; border-left: 3px solid transparent; }
+    .sb-link { display: flex; align-items: center; gap: 10px; padding: 10px 18px; font-size: 13px; color: rgba(255,255,255,0.65); text-decoration: none; border-left: 3px solid transparent; transition: background 0.2s, color 0.2s; }
     .sb-link:hover { background: rgba(255,255,255,0.07); color: #fff; }
     .sb-link.active { background: rgba(245,197,24,0.12); color: #F5C518; border-left-color: #F5C518; }
-    .sb-link i { font-size: 17px; }
+    .sb-link i { font-size: 18px; }
     .sb-bottom { margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding: 10px 0; }
     .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
     .topbar { background: #fff; border-bottom: 3px solid #F5C518; padding: 0 24px; height: 54px; display: flex; align-items: center; justify-content: space-between; }
     .topbar h1 { font-size: 16px; color: #003B7A; font-weight: 500; }
     .topbar-right { display: flex; align-items: center; gap: 12px; }
-    .btn-preview { display: flex; align-items: center; gap: 6px; padding: 7px 14px; background: #EBF3FB; border: 1px solid #b8d4ef; border-radius: 8px; font-size: 13px; color: #003B7A; text-decoration: none; font-weight: 500; }
+    .btn-preview { display: flex; align-items: center; gap: 6px; padding: 7px 14px; background: #EBF3FB; border: 1px solid #b8d4ef; border-radius: 8px; font-size: 12px; color: #003B7A; text-decoration: none; font-weight: 500; }
     .btn-preview:hover { background: #d6e8f7; }
     .user-info { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #555; }
-    .avatar { width: 34px; height: 34px; border-radius: 50%; background: #003B7A; color: #F5C518; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
-    .badge-rol { background: #FEF9E7; color: #003B7A; border: 1px solid #F5C518; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: #003B7A; color: #F5C518; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; }
+    .badge-rol { background: #F5C518; color: #003B7A; font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
     .content { padding: 24px; flex: 1; }
     .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
     .top-bar h2 { font-size: 14px; font-weight: 500; color: #1a202c; }
@@ -135,7 +135,7 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
     .card-body { padding: 12px; }
     .card-title { font-size: 13px; font-weight: 500; color: #1a202c; margin-bottom: 3px; }
     .card-cat { font-size: 11px; color: #aaa; margin-bottom: 8px; }
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 500; margin-bottom: 8px; }
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-bottom: 8px; }
     .badge-pub { background: #EAF3DE; color: #3B6D11; }
     .badge-dra { background: #FEF9E7; color: #856d00; }
     .badge-arc { background: #f4f6fa; color: #888; }
