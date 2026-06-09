@@ -176,6 +176,14 @@ $colores_txt = ['#003B7A', '#3B6D11', '#856d00', '#5b21b6', '#B91C1C', '#0F6E56'
     .hero-stat-label { color: rgba(255,255,255,0.5); font-size: 11px; margin-top: 2px; }
     .hero-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background: #F5C518; }
 
+    /* Barra compacta de categoría */
+    .cat-bar { background: #003B7A; border-bottom: 3px solid #F5C518; padding: 14px 24px; display: flex; align-items: center; gap: 14px; }
+    .cat-bar-back { display: flex; align-items: center; gap: 6px; color: rgba(255,255,255,0.6); font-size: 13px; text-decoration: none; white-space: nowrap; }
+    .cat-bar-back:hover { color: #F5C518; }
+    .cat-bar-divider { color: rgba(255,255,255,0.25); font-size: 16px; }
+    .cat-bar-name { color: #fff; font-size: 15px; font-weight: 500; }
+    .cat-bar-count { margin-left: auto; background: rgba(245,197,24,0.15); color: #F5C518; border: 0.5px solid rgba(245,197,24,0.3); font-size: 12px; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+
     /* Contenido */
     .content { padding: 28px 24px; max-width: 1100px; margin: 0 auto; }
 
@@ -298,6 +306,16 @@ $colores_txt = ['#003B7A', '#3B6D11', '#856d00', '#5b21b6', '#B91C1C', '#0F6E56'
   </a>
 </div>
 
+<?php if ($cat && $cat_actual): ?>
+<!-- Barra compacta de categoría -->
+<div class="cat-bar">
+  <a class="cat-bar-back" href="?lang=<?= $lang ?>">&#8592; <?= $lang === 'es' ? 'Inicio' : 'Home' ?></a>
+  <span class="cat-bar-divider">/</span>
+  <span class="cat-bar-name"><?= htmlspecialchars($lang === 'en' ? ($cat_actual['nombre_en'] ?? $cat_actual['nombre_es']) : $cat_actual['nombre_es']) ?></span>
+  <?php $n = $conteos[$cat] ?? 0; ?>
+  <span class="cat-bar-count"><?= $n ?> <?= $lang === 'es' ? ($n === 1 ? 'revista' : 'revistas') : ($n === 1 ? 'magazine' : 'magazines') ?></span>
+</div>
+<?php else: ?>
 <!-- Hero -->
 <div class="hero">
   <div class="hero-title">
@@ -327,6 +345,7 @@ $colores_txt = ['#003B7A', '#3B6D11', '#856d00', '#5b21b6', '#B91C1C', '#0F6E56'
   </div>
   <div class="hero-bar"></div>
 </div>
+<?php endif; ?>
 
 <!-- Contenido -->
 <div class="content">
