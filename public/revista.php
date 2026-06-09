@@ -113,7 +113,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
 
     /* Artículo principal */
     .article { background: #fff; border-radius: 14px; border: 0.5px solid #e2e8f0; overflow: hidden; }
-    .article-cover { width: 100%; height: 320px; background: #EBF3FB; display: flex; align-items: center; justify-content: center; font-size: 80px; overflow: hidden; position: relative; }
+    .article-cover { width: 100%; height: 280px; max-height: 280px; background: #EBF3FB; display: flex; align-items: center; justify-content: center; font-size: 80px; overflow: hidden; position: relative; }
     .article-cover img { width: 100%; height: 100%; object-fit: cover; }
     .article-cover-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background: #F5C518; }
     .article-body { padding: 28px; }
@@ -168,9 +168,9 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
     .footer { background: #003B7A; color: rgba(255,255,255,0.5); text-align: center; padding: 24px; font-size: 12px; margin-top: 40px; border-top: 3px solid #F5C518; }
     .footer strong { color: #F5C518; }
 
-    @media (max-width: 700px) {
+    @media (max-width: 768px) {
       .content { grid-template-columns: 1fr; }
-      .article-cover { height: 200px; }
+      .article-cover { height: 180px; max-height: 180px; }
     }
   </style>
 </head>
