@@ -122,6 +122,7 @@ $colores_txt = ['#003B7A', '#3B6D11', '#856d00', '#5b21b6', '#B91C1C', '#0F6E56'
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Revistas UDC</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; background: #f4f6fa; min-height: 100vh; }
@@ -306,12 +307,12 @@ $colores_txt = ['#003B7A', '#3B6D11', '#856d00', '#5b21b6', '#B91C1C', '#0F6E56'
   </a>
 </div>
 
-<?php if ($cat && $cat_actual): ?>
+<?php if ($cat): ?>
 <!-- Barra compacta de categoría -->
 <div class="cat-bar">
   <a class="cat-bar-back" href="?lang=<?= $lang ?>">&#8592; <?= $lang === 'es' ? 'Inicio' : 'Home' ?></a>
   <span class="cat-bar-divider">/</span>
-  <span class="cat-bar-name"><?= htmlspecialchars($lang === 'en' ? ($cat_actual['nombre_en'] ?? $cat_actual['nombre_es']) : $cat_actual['nombre_es']) ?></span>
+  <span class="cat-bar-name"><?= $cat_actual ? htmlspecialchars($lang === 'en' ? ($cat_actual['nombre_en'] ?? $cat_actual['nombre_es']) : $cat_actual['nombre_es']) : '' ?></span>
   <?php $n = $conteos[$cat] ?? 0; ?>
   <span class="cat-bar-count"><?= $n ?> <?= $lang === 'es' ? ($n === 1 ? 'revista' : 'revistas') : ($n === 1 ? 'magazine' : 'magazines') ?></span>
 </div>
