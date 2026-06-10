@@ -1,10 +1,13 @@
 <?php
+// CONEXIÓN A BASE DE DATOS
 require_once '../config/db.php';
 assert($pdo instanceof PDO);
 
+// DETECTAR IDIOMA Y CATEGORÍA ACTIVA
 $lang = isset($_GET['lang']) && $_GET['lang'] === 'en' ? 'en' : 'es';
 $cat  = isset($_GET['cat']) ? (int)$_GET['cat'] : null;
 
+// REGISTRAR VISITA VÍA AJAX
 if (isset($_GET['visita'])) {
     if ($pdo !== null) {
         try {
@@ -15,10 +18,10 @@ if (isset($_GET['visita'])) {
     echo 'ok'; exit;
 }
 
-// Búsqueda
+// LEER TÉRMINO DE BÚSQUEDA
 $busqueda = trim($_GET['q'] ?? '');
 
-// Defaults en caso de error de BD
+// INICIALIZAR VARIABLES POR DEFECTO EN CASO DE ERROR DE BD
 $ui             = [];
 $categorias     = [];
 $total_revistas = 0;
@@ -30,24 +33,28 @@ $revistas_cat   = [];
 $cat_actual     = null;
 $db_ok          = false;
 
+// CONSULTAS PRINCIPALES A LA BASE DE DATOS
 if ($pdo !== null) {
 try {
+// CARGAR TEXTOS DE INTERFAZ (I18N)
 $stmt = $pdo->query('SELECT clave, texto_es, texto_en FROM ui_textos');
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $ui[$row['clave']] = $lang === 'en' ? $row['texto_en'] : $row['texto_es'];
 }
 $db_ok = true;
 
+// OBTENER CATEGORÍAS ACTIVAS Y TOTAL DE REVISTAS PUBLICADAS
 $categorias     = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY nombre_es')->fetchAll(PDO::FETCH_ASSOC);
 $total_revistas = $pdo->query('SELECT COUNT(*) FROM revistas WHERE estado = "publicada"')->fetchColumn();
 
-// Conteo por categoría
+// CONTEO DE REVISTAS POR CATEGORÍA
 $conteos = [];
 $stmt_c  = $pdo->query('SELECT categoria_id, COUNT(*) as total FROM revistas WHERE estado = "publicada" GROUP BY categoria_id');
 while ($row = $stmt_c->fetch(PDO::FETCH_ASSOC)) {
     $conteos[$row['categoria_id']] = $row['total'];
 }
 
+// OBTENER REVISTAS MÁS VISITADAS Y RECIENTES SEGÚN IDIOMA
 if ($lang === 'en') {
     $mas_visitadas = $pdo->query('
         SELECT re.titulo, re.descripcion, re.portada_url, re.pdf_url, re.revista_id, r.visitas, r.categoria_id
@@ -70,7 +77,7 @@ if ($lang === 'en') {
     ')->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Búsqueda
+// EJECUTAR BÚSQUEDA DE TEXTO LIBRE
 if ($busqueda) {
     if ($lang === 'en') {
         $stmt_b = $pdo->prepare('
@@ -89,7 +96,7 @@ if ($busqueda) {
     $resultados_busqueda = $stmt_b->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Revistas por categoría
+// OBTENER REVISTAS DE LA CATEGORÍA SELECCIONADA
 if ($cat) {
     $stmt_cat = $pdo->prepare('SELECT * FROM categorias WHERE id = ?');
     $stmt_cat->execute([$cat]);
@@ -112,6 +119,7 @@ if ($cat) {
 } catch (\Throwable $e) { /* usa defaults vacíos declarados arriba */ }
 }
 
+// MAPA DE ICONOS TABLER POR NOMBRE DE CATEGORÍA
 $iconos_cat = [
     'Ciencias de la Salud'                          => 'ti-stethoscope',
     'Ingenierías y Tecnología'                      => 'ti-cpu',
@@ -266,7 +274,7 @@ $iconos_cat = [
 </head>
 <body>
 
-<!-- Topbar -->
+<!-- TOPBAR: BARRA DE NAVEGACIÓN SUPERIOR -->
 <div class="topbar">
   <div class="topbar-left">
     <button class="menu-btn" onclick="openDrawer()" aria-label="Menú">&#9776;</button>
@@ -278,10 +286,10 @@ $iconos_cat = [
   <span class="lang-pill"><?= $lang === 'es' ? 'MX Español' : 'US English' ?></span>
 </div>
 
-<!-- Overlay -->
+<!-- OVERLAY: FONDO OSCURO AL ABRIR EL DRAWER -->
 <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
 
-<!-- Drawer -->
+<!-- DRAWER: MENÚ LATERAL DESLIZABLE CON CATEGORÍAS E IDIOMAS -->
 <div class="drawer" id="drawer">
   <div class="drawer-header">
     <h2>Revistas UDC</h2>
@@ -293,12 +301,14 @@ $iconos_cat = [
     <?= $lang === 'es' ? 'Idioma' : 'Language' ?>
     <i class="ti ti-chevron-down" id="chevron" style="margin-left:auto;font-size:13px;" aria-hidden="true"></i>
   </div>
+  <!-- SELECTOR DE IDIOMA DESPLEGABLE -->
   <div class="lang-sub" id="langSub">
     <a class="lang-option <?= $lang === 'es' ? 'active' : '' ?>" href="?lang=es">🇲🇽 Español</a>
     <a class="lang-option <?= $lang === 'en' ? 'active' : '' ?>" href="?lang=en">🇺🇸 English</a>
   </div>
   <div class="drawer-divider"></div>
   <div class="drawer-section"><?= $lang === 'es' ? 'Categorías' : 'Categories' ?></div>
+  <!-- ENLACES DE CATEGORÍAS EN EL DRAWER -->
   <a class="cat-link <?= !$cat ? 'active' : '' ?>" href="?lang=<?= $lang ?>">
     <i class="ti ti-home" aria-hidden="true"></i>
     <?= $lang === 'es' ? 'Inicio' : 'Home' ?>
@@ -316,8 +326,9 @@ $iconos_cat = [
   </a>
 </div>
 
+<!-- BARRA COMPACTA O HERO SEGÚN SI HAY CATEGORÍA ACTIVA -->
 <?php if ($cat): ?>
-<!-- Barra compacta de categoría -->
+<!-- BARRA COMPACTA: MUESTRA NOMBRE Y CONTEO DE LA CATEGORÍA ACTIVA -->
 <div class="cat-bar">
   <a class="cat-bar-back" href="?lang=<?= $lang ?>">&#8592; <?= $lang === 'es' ? 'Inicio' : 'Home' ?></a>
   <span class="cat-bar-divider">/</span>
@@ -326,7 +337,7 @@ $iconos_cat = [
   <span class="cat-bar-count"><?= $n ?> <?= $lang === 'es' ? ($n === 1 ? 'revista' : 'revistas') : ($n === 1 ? 'magazine' : 'magazines') ?></span>
 </div>
 <?php else: ?>
-<!-- Hero -->
+<!-- HERO: BANNER PRINCIPAL CON BUSCADOR Y ESTADÍSTICAS -->
 <div class="hero">
   <div class="hero-title">
     <?= $lang === 'es' ? 'Plataforma de <span>Revistas</span>' : 'Magazine <span>Platform</span>' ?>
@@ -334,11 +345,13 @@ $iconos_cat = [
   <div class="hero-sub">
     <?= $lang === 'es' ? 'Universidad de Colima — Difusión académica y cultural' : 'University of Colima — Academic and cultural outreach' ?>
   </div>
+  <!-- FORMULARIO DE BÚSQUEDA EN EL HERO -->
   <form class="hero-search" method="GET" action="">
     <input type="hidden" name="lang" value="<?= $lang ?>">
     <input type="text" name="q" placeholder="<?= $lang === 'es' ? 'Buscar revista...' : 'Search magazine...' ?>" value="<?= htmlspecialchars($busqueda) ?>">
     <button type="submit">&#128269;</button>
   </form>
+  <!-- ESTADÍSTICAS GLOBALES DE LA PLATAFORMA -->
   <div class="hero-stats">
     <div class="hero-stat">
       <div class="hero-stat-val"><?= $total_revistas ?></div>
@@ -357,11 +370,11 @@ $iconos_cat = [
 </div>
 <?php endif; ?>
 
-<!-- Contenido -->
+<!-- CONTENIDO PRINCIPAL -->
 <div class="content">
 
   <?php if ($busqueda): ?>
-    <!-- Resultados de búsqueda -->
+    <!-- RESULTADOS DE BÚSQUEDA -->
     <div class="search-header">
       <div class="section-bar"></div>
       <span class="section-title"><?= $lang === 'es' ? 'Resultados para:' : 'Results for:' ?></span>
@@ -371,11 +384,12 @@ $iconos_cat = [
     <?php if (empty($resultados_busqueda)): ?>
       <div class="empty">🔍 <?= $lang === 'es' ? 'No se encontraron revistas.' : 'No magazines found.' ?></div>
     <?php else: ?>
+      <!-- RENDERIZAR TARJETAS DE RESULTADOS -->
       <div class="grid"><?php foreach ($resultados_busqueda as $rev): echo tarjeta($rev, $lang, false); endforeach; ?></div>
     <?php endif; ?>
 
   <?php elseif ($cat && $cat_actual): ?>
-    <!-- Vista de categoría -->
+    <!-- VISTA DE CATEGORÍA: LISTA DE REVISTAS FILTRADAS -->
     <div class="breadcrumb">
       <a href="?lang=<?= $lang ?>">&#8592; <?= $lang === 'es' ? 'Inicio' : 'Home' ?></a>
       &nbsp;/&nbsp; <?= htmlspecialchars($lang === 'en' ? $cat_actual['nombre_en'] : $cat_actual['nombre_es']) ?>
@@ -388,13 +402,14 @@ $iconos_cat = [
     <?php if (empty($revistas_cat)): ?>
       <div class="empty">📭 <?= $lang === 'es' ? 'No hay revistas en esta categoría.' : 'No magazines in this category yet.' ?></div>
     <?php else: ?>
+      <!-- RENDERIZAR TARJETAS DE LA CATEGORÍA -->
       <div class="grid"><?php foreach ($revistas_cat as $rev): echo tarjeta($rev, $lang, false); endforeach; ?></div>
     <?php endif; ?>
 
   <?php else: ?>
-    <!-- Inicio -->
+    <!-- VISTA INICIO: CATEGORÍAS + MÁS VISITADAS + RECIENTES -->
 
-    <!-- Categorías visuales -->
+    <!-- GRID DE TARJETAS DE CATEGORÍAS -->
     <div class="section-header">
       <div class="section-bar"></div>
       <span class="section-title"><?= $lang === 'es' ? 'Explorar por categoría' : 'Browse by category' ?></span>
@@ -413,30 +428,32 @@ $iconos_cat = [
       <?php endforeach; ?>
     </div>
 
-    <!-- Más visitadas -->
+    <!-- SECCIÓN: REVISTAS MÁS VISITADAS -->
     <div class="section-wrap">
       <div class="section-header">
         <div class="section-bar"></div>
-        <span class="section-title">🔥 <?= $lang === 'es' ? 'Más visitadas' : 'Most visited' ?></span>
+        <span class="section-title"> <?= $lang === 'es' ? 'Más visitadas' : 'Most visited' ?></span>
         <span class="section-sub"><?= $lang === 'es' ? 'Top esta semana' : 'Top this week' ?></span>
       </div>
       <?php if (empty($mas_visitadas)): ?>
         <div class="empty">📭 <?= $lang === 'es' ? 'No hay revistas publicadas aún.' : 'No magazines published yet.' ?></div>
       <?php else: ?>
+        <!-- RENDERIZAR TARJETAS CON CONTADOR DE VISITAS -->
         <div class="grid"><?php foreach ($mas_visitadas as $rev): echo tarjeta($rev, $lang, true); endforeach; ?></div>
       <?php endif; ?>
     </div>
 
-    <!-- Recientes -->
+    <!-- SECCIÓN: PUBLICACIONES RECIENTES -->
     <div class="section-wrap">
       <div class="section-header">
         <div class="section-bar"></div>
-        <span class="section-title">🆕 <?= $lang === 'es' ? 'Recientes' : 'Recent' ?></span>
+        <span class="section-title"> <?= $lang === 'es' ? 'Recientes' : 'Recent' ?></span>
         <span class="section-sub"><?= $lang === 'es' ? 'Últimas publicaciones' : 'Latest publications' ?></span>
       </div>
       <?php if (empty($recientes)): ?>
         <div class="empty">📭 <?= $lang === 'es' ? 'No hay revistas publicadas aún.' : 'No magazines published yet.' ?></div>
       <?php else: ?>
+        <!-- RENDERIZAR TARJETAS DE PUBLICACIONES RECIENTES -->
         <div class="grid"><?php foreach ($recientes as $rev): echo tarjeta($rev, $lang, false); endforeach; ?></div>
       <?php endif; ?>
     </div>
@@ -444,14 +461,14 @@ $iconos_cat = [
 
 </div>
 
-<!-- Footer -->
+<!-- FOOTER -->
 <div class="footer">
   <strong>Universidad de Colima</strong> &nbsp;·&nbsp;
   <?= $lang === 'es' ? 'Plataforma de Revistas Institucional' : 'Institutional Magazine Platform' ?>
   &nbsp;·&nbsp; <?= date('Y') ?>
 </div>
 
-<!-- Visor PDF -->
+<!-- VISOR PDF: MODAL FLOTANTE PARA LECTURA EN LÍNEA -->
 <div class="pdf-overlay" id="pdfOverlay">
   <div class="pdf-topbar">
     <h3 id="pdfTitulo"></h3>
@@ -466,6 +483,7 @@ $iconos_cat = [
 </div>
 
 <?php
+// FUNCIÓN AUXILIAR: RENDERIZAR TARJETA HTML DE UNA REVISTA
 function tarjeta($rev, $lang, $mostrar_visitas = false) {
     $titulo = htmlspecialchars($rev['titulo']);
     $pdf    = htmlspecialchars($rev['pdf_url'] ?? '');
@@ -499,20 +517,24 @@ function tarjeta($rev, $lang, $mostrar_visitas = false) {
 ?>
 
 <script>
+// ABRIR DRAWER (MENÚ LATERAL)
 function openDrawer() {
   document.getElementById('drawer').classList.add('open');
   document.getElementById('overlay').classList.add('open');
 }
+// CERRAR DRAWER
 function closeDrawer() {
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('overlay').classList.remove('open');
 }
+// ALTERNAR SUBMENÚ DE IDIOMAS
 function toggleLang() {
   const sub = document.getElementById('langSub');
   const ch  = document.getElementById('chevron');
   sub.classList.toggle('open');
   ch.style.transform = sub.classList.contains('open') ? 'rotate(180deg)' : '';
 }
+// ABRIR VISOR PDF Y REGISTRAR VISITA
 function abrirPDF(pdf, titulo, id) {
   if (!pdf) {
     alert('<?= $lang === 'es' ? 'Esta revista no tiene PDF disponible.' : 'This magazine has no PDF available.' ?>');
@@ -524,6 +546,7 @@ function abrirPDF(pdf, titulo, id) {
   document.getElementById('btnDescargar').href     = '../' + pdf;
   document.getElementById('pdfOverlay').classList.add('open');
 }
+// CERRAR VISOR PDF
 function cerrarPDF() {
   document.getElementById('pdfOverlay').classList.remove('open');
   document.getElementById('pdfFrame').src = '';
