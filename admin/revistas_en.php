@@ -133,18 +133,23 @@ $versiones = $pdo->query('
     .tabla-header-bar { width: 3px; height: 18px; background: #F5C518; border-radius: 2px; }
     table { width: 100%; border-collapse: collapse; }
     th { background: #003B7A; color: rgba(255,255,255,0.8); padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 500; }
-    td { padding: 11px 14px; font-size: 13px; color: #333; border-bottom: 1px solid #f4f6fa; vertical-align: middle; }
+    td { padding: 16px 14px; font-size: 13px; color: #333; border-bottom: 1px solid #f4f6fa; vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #f9fbff; }
     .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
     .badge-pub { background: #EAF3DE; color: #3B6D11; }
     .badge-dra { background: #FEF9E7; color: #856d00; }
     .badge-arc { background: #f4f6fa; color: #888; }
-    .btn-xs { padding: 4px 9px; border-radius: 6px; font-size: 11px; cursor: pointer; border: 1px solid #e2e8f0; background: #fff; color: #333; text-decoration: none; display: inline-block; margin-right: 4px; }
+    .btn-group { display: flex; flex-wrap: wrap; gap: 6px; }
+    .btn-xs { padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; border: 1px solid #e2e8f0; background: #fff; color: #555; text-decoration: none; display: inline-block; white-space: nowrap; }
     .btn-xs:hover { background: #f4f6fa; }
     .btn-xs.primary { background: #003B7A; color: #fff; border-color: #003B7A; }
-    .btn-xs.danger { border-color: #fca5a5; color: #b91c1c; }
+    .btn-xs.primary:hover { background: #00306a; }
+    .btn-xs.danger { border-color: #fca5a5; color: #b91c1c; background: transparent; }
     .btn-xs.danger:hover { background: #fee2e2; }
+    .portada-thumb { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; background: #f4f6fa; display: block; }
+    .portada-thumb-ph { width: 40px; height: 40px; border-radius: 6px; background: #f4f6fa; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .titulo-cell { line-height: 1.4; }
     .form-card { background: #fff; border-radius: 12px; border: 0.5px solid #e2e8f0; overflow: hidden; position: sticky; top: 24px; }
     .form-card-header { background: #003B7A; padding: 16px 20px; display: flex; align-items: center; gap: 10px; }
     .form-card-header h2 { color: #fff; font-size: 14px; font-weight: 500; }
@@ -212,6 +217,7 @@ $versiones = $pdo->query('
       <table>
         <thead>
           <tr>
+            <th style="width:52px"></th>
             <th>Título en inglés</th>
             <th>Revista original</th>
             <th>Estado</th>
@@ -223,24 +229,33 @@ $versiones = $pdo->query('
             $badge = match($v['estado']) { 'publicada' => 'badge-pub', 'borrador' => 'badge-dra', default => 'badge-arc' };
           ?>
           <tr>
-            <td><?= htmlspecialchars($v['titulo']) ?></td>
+            <td>
+              <?php if (!empty($v['portada_url'])): ?>
+                <img class="portada-thumb" src="<?= htmlspecialchars(url_asset($v['portada_url'])) ?>" alt="">
+              <?php else: ?>
+                <div class="portada-thumb-ph">📄</div>
+              <?php endif; ?>
+            </td>
+            <td class="titulo-cell"><?= htmlspecialchars($v['titulo']) ?></td>
             <td>
               <div><?= htmlspecialchars($v['titulo_es']) ?></div>
               <div style="font-size:11px;color:#aaa;"><?= htmlspecialchars($v['categoria']) ?></div>
             </td>
             <td><span class="badge <?= $badge ?>"><?= $v['estado'] ?></span></td>
             <td>
-              <a class="btn-xs primary" href="editar_revista_en.php?id=<?= $v['id'] ?>">Editar</a>
-              <?php if ($v['estado'] !== 'publicada'): ?>
-                <a class="btn-xs primary" href="?id=<?= $v['id'] ?>&estado=publicada">Publicar</a>
-              <?php endif; ?>
-              <?php if ($v['estado'] !== 'borrador'): ?>
-                <a class="btn-xs" href="?id=<?= $v['id'] ?>&estado=borrador">Borrador</a>
-              <?php endif; ?>
-              <?php if ($v['pdf_url']): ?>
-                <a class="btn-xs" href="<?= htmlspecialchars(url_asset($v['pdf_url'])) ?>" target="_blank">Ver PDF</a>
-              <?php endif; ?>
-              <a class="btn-xs danger" href="?eliminar=<?= $v['id'] ?>" onclick="return confirm('¿Eliminar esta versión en inglés?')">Eliminar</a>
+              <div class="btn-group">
+                <a class="btn-xs primary" href="editar_revista_en.php?id=<?= $v['id'] ?>">Editar</a>
+                <?php if ($v['estado'] !== 'publicada'): ?>
+                  <a class="btn-xs primary" href="?id=<?= $v['id'] ?>&estado=publicada">Publicar</a>
+                <?php endif; ?>
+                <?php if ($v['estado'] !== 'borrador'): ?>
+                  <a class="btn-xs" href="?id=<?= $v['id'] ?>&estado=borrador">Borrador</a>
+                <?php endif; ?>
+                <?php if ($v['pdf_url']): ?>
+                  <a class="btn-xs" href="<?= htmlspecialchars(url_asset($v['pdf_url'])) ?>" target="_blank">Ver PDF</a>
+                <?php endif; ?>
+                <a class="btn-xs danger" href="?eliminar=<?= $v['id'] ?>" onclick="return confirm('¿Eliminar esta versión en inglés?')">Eliminar</a>
+              </div>
             </td>
           </tr>
           <?php endforeach; ?>
