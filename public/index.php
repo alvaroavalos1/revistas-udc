@@ -113,9 +113,9 @@ if ($cat) {
 }
 
 $iconos_cat = [
-    'Ciencias de la Salud'                          => 'ti-heart-pulse',
+    'Ciencias de la Salud'                          => 'ti-stethoscope',
     'Ingenierías y Tecnología'                      => 'ti-cpu',
-    'Ciencias Marítimas y del Mar'                  => 'ti-waves',
+    'Ciencias Marítimas y del Mar'                  => 'ti-anchor',
     'Ciencias Sociales y Derecho'                   => 'ti-scale',
     'Humanidades, Artes y Educación'                => 'ti-palette',
     'Ciencias Exactas y Naturales'                  => 'ti-microscope',
