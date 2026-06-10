@@ -1,16 +1,19 @@
 <?php
+// CONEXIÓN A BASE DE DATOS
 require_once '../config/db.php';
 assert($pdo instanceof PDO);
 
+// DETECTAR IDIOMA E ID DE REVISTA
 $lang = isset($_GET['lang']) && $_GET['lang'] === 'en' ? 'en' : 'es';
 $id   = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
+// REDIRIGIR SI NO SE ESPECIFICA UN ID VÁLIDO
 if (!$id) {
     header('Location: index.php?lang=' . $lang);
     exit;
 }
 
-// Obtener revista según idioma
+// OBTENER DATOS DE LA REVISTA SEGÚN IDIOMA
 if ($lang === 'en') {
     $stmt = $pdo->prepare('
         SELECT re.titulo, re.descripcion, re.portada_url, re.pdf_url, re.estado,
@@ -37,15 +40,16 @@ if ($lang === 'en') {
 $stmt->execute([$id]);
 $revista = $stmt->fetch(PDO::FETCH_ASSOC);
 
+// REDIRIGIR SI LA REVISTA NO EXISTE O NO ESTÁ PUBLICADA
 if (!$revista) {
     header('Location: index.php?lang=' . $lang);
     exit;
 }
 
-// Registrar visita
+// REGISTRAR VISITA AL CARGAR LA PÁGINA
 $pdo->prepare('UPDATE revistas SET visitas = visitas + 1 WHERE id = ?')->execute([$id]);
 
-// Obtener más revistas de la misma categoría
+// OBTENER REVISTAS RELACIONADAS DE LA MISMA CATEGORÍA
 if ($lang === 'en') {
     $stmt_rel = $pdo->prepare('
         SELECT re.titulo, re.portada_url, re.revista_id
@@ -65,6 +69,7 @@ if ($lang === 'en') {
 $stmt_rel->execute([$revista['categoria_id'], $id]);
 $relacionadas = $stmt_rel->fetchAll(PDO::FETCH_ASSOC);
 
+// OBTENER CATEGORÍAS PARA EL MENÚ LATERAL
 $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY nombre_es')->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
@@ -177,7 +182,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
 </head>
 <body>
 
-<!-- Topbar -->
+<!-- TOPBAR: BARRA DE NAVEGACIÓN SUPERIOR -->
 <div class="topbar">
   <div class="topbar-left">
     <button class="menu-btn" onclick="openDrawer()" aria-label="Menú">&#9776;</button>
@@ -189,10 +194,10 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
   <span class="lang-pill"><?= $lang === 'es' ? 'MX Español' : 'US English' ?></span>
 </div>
 
-<!-- Overlay -->
+<!-- OVERLAY: FONDO OSCURO AL ABRIR EL DRAWER -->
 <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
 
-<!-- Drawer -->
+<!-- DRAWER: MENÚ LATERAL CON IDIOMAS Y CATEGORÍAS -->
 <div class="drawer" id="drawer">
   <div class="drawer-header">
     <h2>Revistas UDC</h2>
@@ -204,12 +209,14 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
     <?= $lang === 'es' ? 'Idioma' : 'Language' ?>
     <i class="ti ti-chevron-down" id="chevron" style="margin-left:auto;font-size:13px;" aria-hidden="true"></i>
   </div>
+  <!-- SELECTOR DE IDIOMA DESPLEGABLE -->
   <div class="lang-sub" id="langSub">
     <a class="lang-option <?= $lang === 'es' ? 'active' : '' ?>" href="?id=<?= $id ?>&lang=es">🇲🇽 Español</a>
     <a class="lang-option <?= $lang === 'en' ? 'active' : '' ?>" href="?id=<?= $id ?>&lang=en">🇺🇸 English</a>
   </div>
   <div class="drawer-divider"></div>
   <div class="drawer-section"><?= $lang === 'es' ? 'Categorías' : 'Categories' ?></div>
+  <!-- ENLACES DE CATEGORÍAS EN EL DRAWER -->
   <a class="cat-link" href="index.php?lang=<?= $lang ?>">
     <i class="ti ti-home" aria-hidden="true"></i>
     <?= $lang === 'es' ? 'Inicio' : 'Home' ?>
@@ -227,7 +234,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
   </a>
 </div>
 
-<!-- Breadcrumb -->
+<!-- BREADCRUMB: RUTA DE NAVEGACIÓN -->
 <div class="breadcrumb">
   <a href="index.php?lang=<?= $lang ?>">&#8592; <?= $lang === 'es' ? 'Inicio' : 'Home' ?></a>
   &nbsp;/&nbsp;
@@ -236,10 +243,12 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
   <?= htmlspecialchars($revista['titulo']) ?>
 </div>
 
-<!-- Contenido -->
+<!-- CONTENIDO PRINCIPAL: ARTÍCULO Y SIDEBAR -->
 <div class="content">
-  <!-- Artículo -->
+
+  <!-- ARTÍCULO PRINCIPAL -->
   <div class="article">
+    <!-- PORTADA DE LA REVISTA -->
     <div class="article-cover">
       <?php if ($revista['portada_url']): ?>
         <img src="<?= htmlspecialchars((str_starts_with($revista['portada_url'], 'http') || str_starts_with($revista['portada_url'], 'data:')) ? $revista['portada_url'] : '../' . $revista['portada_url']) ?>" alt="Portada" onerror="this.outerHTML='<span style=\'font-size:42px\'>📄</span>'">
@@ -248,7 +257,9 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
       <?php endif; ?>
       <div class="article-cover-bar"></div>
     </div>
+    <!-- CUERPO DEL ARTÍCULO: METADATOS, TÍTULO, DESCRIPCIÓN Y ACCIONES -->
     <div class="article-body">
+      <!-- METADATOS: CATEGORÍA, AUTOR Y FECHA DE PUBLICACIÓN -->
       <div class="article-meta">
         <span class="meta-cat"><?= htmlspecialchars($revista['categoria']) ?></span>
         <span class="meta-autor">👤 <?= htmlspecialchars($revista['autor']) ?></span>
@@ -261,6 +272,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
         <p class="article-desc"><?= nl2br(htmlspecialchars($revista['descripcion'])) ?></p>
       <?php endif; ?>
 
+      <!-- BOTONES DE ACCIÓN: LEER EN LÍNEA Y DESCARGAR PDF -->
       <div class="article-actions">
         <?php if ($revista['pdf_url']): ?>
           <button class="btn-leer" onclick="abrirPDF('<?= htmlspecialchars(str_starts_with($revista['pdf_url'], 'http') ? $revista['pdf_url'] : '../' . $revista['pdf_url']) ?>', '<?= addslashes(htmlspecialchars($revista['titulo'])) ?>')">
@@ -276,7 +288,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
     </div>
   </div>
 
-  <!-- Sidebar -->
+  <!-- SIDEBAR: REVISTAS RELACIONADAS DE LA MISMA CATEGORÍA -->
   <div class="sidebar-content">
     <div class="side-card">
       <div class="side-card-header">
@@ -287,6 +299,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
         <?php if (empty($relacionadas)): ?>
           <div class="rel-empty"><?= $lang === 'es' ? 'No hay más revistas en esta categoría.' : 'No more magazines in this category.' ?></div>
         <?php else: ?>
+          <!-- RENDERIZAR TARJETAS DE REVISTAS RELACIONADAS -->
           <?php foreach ($relacionadas as $rel): ?>
             <a class="rel-item" href="revista.php?id=<?= $rel['revista_id'] ?>&lang=<?= $lang ?>">
               <div class="rel-img">
@@ -305,14 +318,14 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
   </div>
 </div>
 
-<!-- Footer -->
+<!-- FOOTER -->
 <div class="footer">
   <strong>Universidad de Colima</strong> &nbsp;·&nbsp;
   <?= $lang === 'es' ? 'Plataforma de Revistas Institucional' : 'Institutional Magazine Platform' ?>
   &nbsp;·&nbsp; <?= date('Y') ?>
 </div>
 
-<!-- Visor PDF -->
+<!-- VISOR PDF: MODAL FLOTANTE PARA LECTURA EN LÍNEA -->
 <div class="pdf-overlay" id="pdfOverlay">
   <div class="pdf-topbar">
     <h3 id="pdfTitulo"></h3>
@@ -327,26 +340,31 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
 </div>
 
 <script>
+// ABRIR DRAWER (MENÚ LATERAL)
 function openDrawer() {
   document.getElementById('drawer').classList.add('open');
   document.getElementById('overlay').classList.add('open');
 }
+// CERRAR DRAWER
 function closeDrawer() {
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('overlay').classList.remove('open');
 }
+// ALTERNAR SUBMENÚ DE IDIOMAS
 function toggleLang() {
   const sub = document.getElementById('langSub');
   const ch  = document.getElementById('chevron');
   sub.classList.toggle('open');
   ch.style.transform = sub.classList.contains('open') ? 'rotate(180deg)' : '';
 }
+// ABRIR VISOR PDF
 function abrirPDF(pdf, titulo) {
   document.getElementById('pdfTitulo').textContent = titulo;
   document.getElementById('pdfFrame').src          = pdf;
   document.getElementById('btnDescargar').href     = pdf;
   document.getElementById('pdfOverlay').classList.add('open');
 }
+// CERRAR VISOR PDF
 function cerrarPDF() {
   document.getElementById('pdfOverlay').classList.remove('open');
   document.getElementById('pdfFrame').src = '';
