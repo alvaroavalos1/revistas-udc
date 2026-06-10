@@ -157,6 +157,9 @@ $versiones = $pdo->query('
     input[type=file] { font-size: 13px; }
     .btn-submit { width: 100%; padding: 11px; background: #003B7A; color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 16px; font-weight: 500; }
     .btn-submit:hover { background: #00306a; }
+    .btn-deepl { width: 100%; padding: 9px 12px; background: #003B7A; color: #fff; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; margin-top: 10px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 7px; opacity: 1; transition: background 0.2s; }
+    .btn-deepl:hover { background: #00306a; }
+    .btn-deepl:disabled { opacity: 0.6; cursor: not-allowed; }
     .alert { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; border-left: 3px solid; }
     .alert-ok  { background: #EAF3DE; color: #3B6D11; border-color: #F5C518; }
     .alert-err { background: #FEF2F2; color: #B91C1C; border-color: #B91C1C; }
@@ -265,10 +268,13 @@ $versiones = $pdo->query('
               </option>
             <?php endforeach; ?>
           </select>
+          <button type="button" class="btn-deepl" id="btn-deepl" onclick="autoTranslate()">
+            <i class="ti ti-language"></i> Auto-traducir con DeepL
+          </button>
           <label>Title in English *</label>
-          <input type="text" name="titulo" placeholder="Magazine title in English" required>
+          <input type="text" name="titulo" id="campo-titulo" placeholder="Magazine title in English" required>
           <label>Description in English</label>
-          <textarea name="descripcion" placeholder="Brief description in English..."></textarea>
+          <textarea name="descripcion" id="campo-descripcion" placeholder="Brief description in English..."></textarea>
           <label>Cover image (English version)</label>
           <input type="file" name="portada" accept="image/*">
           <label>PDF file (English version)</label>
@@ -285,5 +291,40 @@ $versiones = $pdo->query('
   </div>
 </div>
 
+<script>
+function autoTranslate() {
+  const select = document.querySelector('select[name="revista_id"]');
+  const revista_id = select ? select.value : '';
+  if (!revista_id) {
+    alert('Selecciona primero una revista en español.');
+    return;
+  }
+  const btn = document.getElementById('btn-deepl');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader" style="animation:spin 1s linear infinite"></i> Traduciendo...';
+
+  const fd = new FormData();
+  fd.append('revista_id', revista_id);
+
+  fetch('deepl_translate.php', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        alert('Error DeepL: ' + data.error);
+      } else {
+        document.getElementById('campo-titulo').value      = data.titulo      || '';
+        document.getElementById('campo-descripcion').value = data.descripcion || '';
+      }
+    })
+    .catch(() => alert('Error de conexión con el servidor.'))
+    .finally(() => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-language"></i> Auto-traducir con DeepL';
+    });
+}
+</script>
+<style>
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
 </body>
 </html>
