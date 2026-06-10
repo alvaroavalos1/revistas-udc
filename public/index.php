@@ -112,20 +112,18 @@ if ($cat) {
 } catch (\Throwable $e) { /* usa defaults vacíos declarados arriba */ }
 }
 
-$emojis_cat = [
-    'Ciencias de la Salud'                          => '🏥',
-    'Ingenierías y Tecnología'                      => '⚙️',
-    'Ciencias Marítimas y del Mar'                  => '🌊',
-    'Ciencias Sociales y Derecho'                   => '⚖️',
-    'Humanidades, Artes y Educación'                => '🎨',
-    'Ciencias Exactas y Naturales'                  => '🔬',
-    'Administración y Negocios'                     => '💼',
-    'Institutos de Investigación Especializada'     => '🔭',
-    'Coordinaciones y Servicios Académicos'         => '🖥️',
-    'Gobierno Universitario y Normatividad'         => '🏛️',
+$iconos_cat = [
+    'Ciencias de la Salud'                          => 'ti-heart-pulse',
+    'Ingenierías y Tecnología'                      => 'ti-cpu',
+    'Ciencias Marítimas y del Mar'                  => 'ti-waves',
+    'Ciencias Sociales y Derecho'                   => 'ti-scale',
+    'Humanidades, Artes y Educación'                => 'ti-palette',
+    'Ciencias Exactas y Naturales'                  => 'ti-microscope',
+    'Administración y Negocios'                     => 'ti-briefcase',
+    'Institutos de Investigación Especializada'     => 'ti-telescope',
+    'Coordinaciones y Servicios Académicos'         => 'ti-device-desktop',
+    'Gobierno Universitario y Normatividad'         => 'ti-building-bank',
 ];
-$colores_cat = ['#EBF3FB', '#EAF3DE', '#FAEEDA', '#EEEDFE', '#FEF2F2', '#E1F5EE', '#F0FFF4', '#FFF5F5'];
-$colores_txt = ['#003B7A', '#3B6D11', '#856d00', '#5b21b6', '#B91C1C', '#0F6E56', '#276749', '#9B2C2C'];
 ?>
 <!DOCTYPE html>
 <html lang="<?= $lang ?>">
@@ -201,11 +199,11 @@ $colores_txt = ['#003B7A', '#3B6D11', '#856d00', '#5b21b6', '#B91C1C', '#0F6E56'
 
     /* Categorías visuales */
     .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 36px; }
-    .cat-card { border-radius: 12px; padding: 16px; cursor: pointer; text-decoration: none; display: flex; flex-direction: column; gap: 8px; border: 1.5px solid transparent; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
-    .cat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); border-color: rgba(0,0,0,0.08); }
-    .cat-card .cat-emoji { font-size: 24px; line-height: 1; }
-    .cat-card-name { font-size: 13px; font-weight: 500; }
-    .cat-card-count { font-size: 11px; opacity: 0.7; }
+    .cat-card { background: #003B7A; color: #fff; border-radius: 12px; padding: 16px 12px; cursor: pointer; text-decoration: none; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; border: 1.5px solid transparent; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
+    .cat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.25); border-color: #F5C518; }
+    .cat-card i { font-size: 48px; color: #F5C518; line-height: 1; }
+    .cat-card-name { font-size: 13px; font-weight: 500; color: #fff; }
+    .cat-card-count { font-size: 11px; color: rgba(255,255,255,0.6); }
 
     /* Secciones */
     .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; margin-top: 8px; }
@@ -402,16 +400,13 @@ $colores_txt = ['#003B7A', '#3B6D11', '#856d00', '#5b21b6', '#B91C1C', '#0F6E56'
       <span class="section-title"><?= $lang === 'es' ? 'Explorar por categoría' : 'Browse by category' ?></span>
     </div>
     <div class="cat-grid">
-      <?php foreach ($categorias as $i => $c):
-        $idx   = $i % count($colores_cat);
-        $color = $colores_cat[$idx];
-        $txt   = $colores_txt[$idx];
-        $emoji = $emojis_cat[$c['nombre_es']] ?? '📚';
-        $total = $conteos[$c['id']] ?? 0;
+      <?php foreach ($categorias as $c):
+        $icono  = $iconos_cat[$c['nombre_es']] ?? 'ti-book';
+        $total  = $conteos[$c['id']] ?? 0;
         $nombre = $lang === 'en' ? $c['nombre_en'] : $c['nombre_es'];
       ?>
-      <a class="cat-card" href="?lang=<?= $lang ?>&cat=<?= $c['id'] ?>" style="background:<?= $color ?>; color:<?= $txt ?>">
-        <span class="cat-emoji" aria-hidden="true"><?= $emoji ?></span>
+      <a class="cat-card" href="?lang=<?= $lang ?>&cat=<?= $c['id'] ?>">
+        <i class="ti <?= $icono ?>" aria-hidden="true"></i>
         <span class="cat-card-name"><?= htmlspecialchars($nombre) ?></span>
         <span class="cat-card-count"><?= $total ?> <?= $lang === 'es' ? 'revistas' : 'magazines' ?></span>
       </a>
