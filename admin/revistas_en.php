@@ -169,6 +169,14 @@ $versiones = $pdo->query('
     .alert-ok  { background: #EAF3DE; color: #3B6D11; border-color: #F5C518; }
     .alert-err { background: #FEF2F2; color: #B91C1C; border-color: #B91C1C; }
     .empty { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
+    .search-wrap { display: flex; align-items: center; gap: 8px; }
+    .btn-search { width: 36px; height: 36px; border-radius: 8px; border: 0.5px solid #e2e8f0; background: #fff; color: #003B7A; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .btn-search:hover { background: #EBF3FB; }
+    .search-input { height: 36px; width: 0; padding: 0; border: 0.5px solid transparent; border-radius: 8px; font-size: 13px; outline: none; background: #EBF3FB; overflow: hidden; transition: width 0.3s ease, padding 0.3s ease, opacity 0.3s ease, border-color 0.3s ease; opacity: 0; font-family: Arial, sans-serif; }
+    .search-input.open { width: 160px; padding: 0 12px; border-color: #003B7A; opacity: 1; }
+    mark { background: #F5C518; color: #003B7A; border-radius: 2px; padding: 0 1px; }
+    .no-results { display: none; text-align: center; padding: 24px; color: #aaa; font-size: 14px; }
+    .tabla-header { justify-content: space-between; }
   </style>
 </head>
 <body>
@@ -208,8 +216,16 @@ $versiones = $pdo->query('
   <div class="content">
     <div class="tabla-wrap">
       <div class="tabla-header">
-        <div class="tabla-header-bar"></div>
-        Versiones en inglés (<?= count($versiones) ?>)
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="tabla-header-bar"></div>
+          <span id="contador-en">Versiones en inglés (<?= count($versiones) ?>)</span>
+        </div>
+        <div class="search-wrap">
+          <input class="search-input" id="searchInput" type="text" placeholder="Search journal..." oninput="filtrarVersiones(this.value)">
+          <button class="btn-search" onclick="toggleSearch()" title="Search">
+            <i class="ti ti-search" aria-hidden="true"></i>
+          </button>
+        </div>
       </div>
       <?php if (empty($versiones)): ?>
         <div class="empty">📭 No hay versiones en inglés todavía.</div>
@@ -228,7 +244,7 @@ $versiones = $pdo->query('
           <?php foreach ($versiones as $v):
             $badge = match($v['estado']) { 'publicada' => 'badge-pub', 'borrador' => 'badge-dra', default => 'badge-arc' };
           ?>
-          <tr>
+          <tr data-name="<?= htmlspecialchars($v['titulo']) ?>">
             <td>
               <?php if (!empty($v['portada_url'])): ?>
                 <img class="portada-thumb" src="<?= htmlspecialchars(url_asset($v['portada_url'])) ?>" alt="">
@@ -261,6 +277,7 @@ $versiones = $pdo->query('
           <?php endforeach; ?>
         </tbody>
       </table>
+      <div class="no-results" id="no-results-en">No journals found</div>
       <?php endif; ?>
     </div>
 
@@ -307,6 +324,58 @@ $versiones = $pdo->query('
 </div>
 
 <script>
+const _totalEn = <?= count($versiones) ?>;
+
+function toggleSearch() {
+  const inp = document.getElementById('searchInput');
+  if (inp.classList.contains('open')) {
+    inp.classList.remove('open'); inp.value = ''; filtrarVersiones('');
+  } else {
+    inp.classList.add('open'); inp.focus();
+  }
+}
+
+function filtrarVersiones(q) {
+  const term = q.trim().toLowerCase();
+  const rows = document.querySelectorAll('tbody tr');
+  let vis = 0;
+  rows.forEach(function(row) {
+    const name = (row.dataset.name || '').toLowerCase();
+    const match = !term || name.includes(term);
+    row.style.display = match ? '' : 'none';
+    if (match) {
+      vis++;
+      const cell = row.querySelector('.titulo-cell');
+      if (cell) {
+        if (!cell.dataset.raw) cell.dataset.raw = cell.textContent.trim();
+        cell.innerHTML = term ? hlText(cell.dataset.raw, term) : escHtml(cell.dataset.raw);
+      }
+    }
+  });
+  document.getElementById('contador-en').textContent = term
+    ? 'Showing ' + vis + ' of ' + _totalEn + ' journals'
+    : 'Versiones en inglés (' + _totalEn + ')';
+  const nr = document.getElementById('no-results-en');
+  if (nr) nr.style.display = (term && vis === 0) ? 'block' : 'none';
+}
+
+function hlText(text, term) {
+  const esc = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text.replace(new RegExp('(' + esc + ')', 'gi'), '<mark>$1</mark>');
+}
+function escHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const inp = document.getElementById('searchInput');
+    if (inp && inp.classList.contains('open')) {
+      inp.classList.remove('open'); inp.value = ''; filtrarVersiones('');
+    }
+  }
+});
+
 function autoTranslate() {
   const select = document.querySelector('select[name="revista_id"]');
   const revista_id = select ? select.value : '';

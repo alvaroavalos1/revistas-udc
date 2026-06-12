@@ -153,6 +153,13 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
     .alert-ok  { background: #EAF3DE; color: #3B6D11; border-color: #F5C518; }
     .alert-err { background: #FEF2F2; color: #B91C1C; border-color: #B91C1C; }
     .empty { text-align: center; padding: 60px; color: #aaa; font-size: 14px; }
+    .search-wrap { display: flex; align-items: center; gap: 8px; }
+    .btn-search { width: 36px; height: 36px; border-radius: 8px; border: 0.5px solid #e2e8f0; background: #fff; color: #003B7A; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .btn-search:hover { background: #EBF3FB; }
+    .search-input { height: 36px; width: 0; padding: 0; border: 0.5px solid transparent; border-radius: 8px; font-size: 13px; outline: none; background: #EBF3FB; overflow: hidden; transition: width 0.3s ease, padding 0.3s ease, opacity 0.3s ease, border-color 0.3s ease; opacity: 0; font-family: Arial, sans-serif; }
+    .search-input.open { width: 160px; padding: 0 12px; border-color: #003B7A; opacity: 1; }
+    mark { background: #F5C518; color: #003B7A; border-radius: 2px; padding: 0 1px; }
+    .no-results { display: none; text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -194,21 +201,27 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
     <?php if ($error):   ?><div class="alert alert-err"><?= $error ?></div><?php endif; ?>
 
     <div class="top-bar">
-      <h2>Todas las revistas (<?= count($revistas) ?>)</h2>
-      <button class="btn-nueva" onclick="document.getElementById('modal').classList.add('open')">
-        <i class="ti ti-plus" aria-hidden="true"></i> Nueva revista
-      </button>
+      <h2 id="contador">Todas las revistas (<?= count($revistas) ?>)</h2>
+      <div class="search-wrap">
+        <input class="search-input" id="searchInput" type="text" placeholder="Buscar revista..." oninput="filtrarRevistas(this.value)">
+        <button class="btn-search" onclick="toggleSearch()" title="Buscar">
+          <i class="ti ti-search" aria-hidden="true"></i>
+        </button>
+        <button class="btn-nueva" onclick="document.getElementById('modal').classList.add('open')">
+          <i class="ti ti-plus" aria-hidden="true"></i> Nueva revista
+        </button>
+      </div>
     </div>
 
     <?php if (empty($revistas)): ?>
       <div class="empty">📭 No hay revistas todavía.</div>
     <?php else: ?>
-    <div class="grid">
+    <div class="grid" id="gridRevistas">
       <?php foreach ($revistas as $r):
         $badge    = match($r['estado']) { 'publicada' => 'badge-pub', 'borrador' => 'badge-dra', default => 'badge-arc' };
         $tiene_en = in_array($r['id'], $con_ingles);
       ?>
-      <div class="card">
+      <div class="card" data-name="<?= htmlspecialchars($r['titulo']) ?>">
         <div class="card-img">
           <?php if ($r['portada_url']): ?>
             <img src="<?= htmlspecialchars(url_asset($r['portada_url'])) ?>" alt="Portada" onerror="this.parentElement.innerHTML='📄'">
@@ -218,7 +231,7 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
         </div>
         <div class="card-body">
           <div class="card-title">
-            <?= htmlspecialchars($r['titulo']) ?>
+            <span class="card-title-text" data-raw="<?= htmlspecialchars($r['titulo']) ?>"><?= htmlspecialchars($r['titulo']) ?></span>
             <?php if ($tiene_en): ?><span class="badge-en">🇺🇸 EN</span><?php endif; ?>
           </div>
           <div class="card-cat"><?= htmlspecialchars($r['categoria']) ?> · <?= htmlspecialchars($r['autor']) ?></div>
@@ -243,6 +256,7 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
       </div>
       <?php endforeach; ?>
     </div>
+    <div class="no-results" id="no-results">No se encontraron revistas</div>
     <?php endif; ?>
   </div>
 </div>
@@ -281,12 +295,58 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
 
 <script>
 const modal = document.getElementById('modal');
-// Cerrar al hacer clic en el fondo oscuro
 modal.addEventListener('click', function(e) { if (e.target === modal) modal.classList.remove('open'); });
-// Cerrar con ESC
-document.addEventListener('keydown', function(e) { if (e.key === 'Escape') modal.classList.remove('open'); });
-// Cerrar si el navegador restaura la página desde bfcache (back/forward)
 window.addEventListener('pageshow', function(e) { if (e.persisted) modal.classList.remove('open'); });
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const inp = document.getElementById('searchInput');
+    if (inp.classList.contains('open')) {
+      inp.classList.remove('open'); inp.value = ''; filtrarRevistas('');
+    } else {
+      modal.classList.remove('open');
+    }
+  }
+});
+
+const _total = <?= count($revistas) ?>;
+
+function toggleSearch() {
+  const inp = document.getElementById('searchInput');
+  if (inp.classList.contains('open')) {
+    inp.classList.remove('open'); inp.value = ''; filtrarRevistas('');
+  } else {
+    inp.classList.add('open'); inp.focus();
+  }
+}
+
+function filtrarRevistas(q) {
+  const term = q.trim().toLowerCase();
+  const cards = document.querySelectorAll('#gridRevistas .card');
+  let vis = 0;
+  cards.forEach(function(card) {
+    const name = (card.dataset.name || '').toLowerCase();
+    const match = !term || name.includes(term);
+    card.style.display = match ? '' : 'none';
+    if (match) {
+      vis++;
+      const sp = card.querySelector('.card-title-text');
+      if (sp) sp.innerHTML = term ? hlText(sp.dataset.raw, term) : escHtml(sp.dataset.raw);
+    }
+  });
+  document.getElementById('contador').textContent = term
+    ? 'Mostrando ' + vis + ' de ' + _total + ' revistas'
+    : 'Todas las revistas (' + _total + ')';
+  document.getElementById('no-results').style.display = (term && vis === 0) ? 'block' : 'none';
+}
+
+function hlText(text, term) {
+  const esc = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text.replace(new RegExp('(' + esc + ')', 'gi'), '<mark>$1</mark>');
+}
+function escHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 </script>
 </body>
 </html>
