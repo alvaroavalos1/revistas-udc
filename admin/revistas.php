@@ -113,7 +113,7 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
     .content { padding: 24px; flex: 1; }
     .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
     .top-bar h2 { font-size: 14px; font-weight: 500; color: #1a202c; }
-    .btn-nueva { display: flex; align-items: center; gap: 6px; padding: 9px 18px; background: #003B7A; color: #fff; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 500; }
+    .btn-nueva { display: flex; align-items: center; gap: 6px; padding: 9px 18px; background: #003B7A; color: #fff; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 500; white-space: nowrap; }
     .btn-nueva:hover { background: #00306a; }
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 100; align-items: center; justify-content: center; }
     .modal-overlay.open { display: flex; }
