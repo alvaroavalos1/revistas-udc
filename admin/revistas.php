@@ -85,6 +85,7 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Revistas — Panel UDC</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -224,7 +225,7 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
       <div class="card" data-name="<?= htmlspecialchars($r['titulo']) ?>">
         <div class="card-img">
           <?php if ($r['portada_url']): ?>
-            <img src="<?= htmlspecialchars(url_asset($r['portada_url'])) ?>" alt="Portada" onerror="this.parentElement.innerHTML='📄'">
+            <img src="<?= htmlspecialchars(url_asset($r['portada_url'])) ?>" alt="Portada" loading="lazy" onerror="this.parentElement.innerHTML='📄'">
           <?php else: ?>
             📄
           <?php endif; ?>

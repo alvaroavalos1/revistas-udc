@@ -102,6 +102,7 @@ $versiones = $pdo->query('
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Versión inglés — Panel UDC</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -247,7 +248,7 @@ $versiones = $pdo->query('
           <tr data-name="<?= htmlspecialchars($v['titulo']) ?>">
             <td>
               <?php if (!empty($v['portada_url'])): ?>
-                <img class="portada-thumb" src="<?= htmlspecialchars(url_asset($v['portada_url'])) ?>" alt="">
+                <img class="portada-thumb" src="<?= htmlspecialchars(url_asset($v['portada_url'])) ?>" alt="" loading="lazy">
               <?php else: ?>
                 <div class="portada-thumb-ph">📄</div>
               <?php endif; ?>

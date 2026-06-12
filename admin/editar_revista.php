@@ -134,6 +134,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Editar revista — Panel UDC</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -303,7 +304,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
       <div class="preview-body">
         <div class="preview-img">
           <?php if ($revista['portada_url']): ?>
-            <img src="<?= htmlspecialchars(url_asset($revista['portada_url'])) ?>" alt="Portada">
+            <img src="<?= htmlspecialchars(url_asset($revista['portada_url'])) ?>" alt="Portada" loading="lazy">
           <?php else: ?>
             📄
           <?php endif; ?>

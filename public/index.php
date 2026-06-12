@@ -139,6 +139,7 @@ $iconos_cat = [
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Revistas UDC</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -492,7 +493,7 @@ function tarjeta($rev, $lang, $mostrar_visitas = false) {
     <div class="card" onclick="window.location='revista.php?id=<?= $id ?>&lang=<?= $lang ?>'">
       <div class="card-img">
         <?php if (!empty($rev['portada_url'])): ?>
-          <img src="<?= htmlspecialchars((str_starts_with($rev['portada_url'], 'http') || str_starts_with($rev['portada_url'], 'data:')) ? $rev['portada_url'] : '../' . $rev['portada_url']) ?>" alt="Portada" onerror="this.outerHTML='<span style=\'font-size:42px\'>📄</span>'">
+          <img src="<?= htmlspecialchars((str_starts_with($rev['portada_url'], 'http') || str_starts_with($rev['portada_url'], 'data:')) ? $rev['portada_url'] : '../' . $rev['portada_url']) ?>" alt="Portada" loading="lazy" onerror="this.outerHTML='<span style=\'font-size:42px\'>📄</span>'">
         <?php else: ?>
           &#x1F4C4;
         <?php endif; ?>

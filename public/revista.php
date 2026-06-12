@@ -78,6 +78,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= htmlspecialchars($revista['titulo']) ?> — Revistas UDC</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -304,7 +305,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
             <a class="rel-item" href="revista.php?id=<?= $rel['revista_id'] ?>&lang=<?= $lang ?>">
               <div class="rel-img">
                 <?php if (!empty($rel['portada_url'])): ?>
-                  <img src="<?= htmlspecialchars((str_starts_with($rel['portada_url'], 'http') || str_starts_with($rel['portada_url'], 'data:')) ? $rel['portada_url'] : '../' . $rel['portada_url']) ?>" alt="" onerror="this.outerHTML='<span style=\'font-size:42px\'>📄</span>'">
+                  <img src="<?= htmlspecialchars((str_starts_with($rel['portada_url'], 'http') || str_starts_with($rel['portada_url'], 'data:')) ? $rel['portada_url'] : '../' . $rel['portada_url']) ?>" alt="" loading="lazy" onerror="this.outerHTML='<span style=\'font-size:42px\'>📄</span>'">
                 <?php else: ?>
                   📄
                 <?php endif; ?>

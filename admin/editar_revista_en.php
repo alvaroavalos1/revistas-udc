@@ -143,6 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Edit English version — Panel UDC</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -312,7 +313,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="preview-body">
         <div class="preview-img">
           <?php if ($rev['portada_url']): ?>
-            <img src="<?= htmlspecialchars(url_asset($rev['portada_url'])) ?>" alt="Cover">
+            <img src="<?= htmlspecialchars(url_asset($rev['portada_url'])) ?>" alt="Cover" loading="lazy">
           <?php else: ?>
             📄
           <?php endif; ?>
