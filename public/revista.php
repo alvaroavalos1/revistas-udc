@@ -79,6 +79,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= htmlspecialchars($revista['titulo']) ?> — Revistas UDC</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -157,14 +158,22 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
     /* Visor PDF */
     .pdf-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 300; flex-direction: column; }
     .pdf-overlay.open { display: flex; }
-    .pdf-topbar { background: #003B7A; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; border-bottom: 3px solid #F5C518; }
-    .pdf-topbar h3 { color: #fff; font-size: 14px; font-weight: 500; }
-    .pdf-actions { display: flex; gap: 10px; align-items: center; }
-    .btn-download { padding: 7px 16px; background: #F5C518; color: #003B7A; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: none; }
+    .pdf-topbar { background: #003B7A; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; border-bottom: 3px solid #F5C518; flex-wrap: wrap; gap: 8px; }
+    .pdf-topbar h3 { color: #fff; font-size: 14px; font-weight: 500; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pdf-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .pdf-nav { display: flex; align-items: center; gap: 6px; }
+    .pdf-nav-btn { background: rgba(255,255,255,0.15); border: none; color: #fff; font-size: 20px; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+    .pdf-nav-btn:hover:not(:disabled) { background: rgba(255,255,255,0.28); }
+    .pdf-nav-btn:disabled { opacity: 0.3; cursor: default; }
+    .pdf-page-info { color: rgba(255,255,255,0.85); font-size: 12px; white-space: nowrap; min-width: 80px; text-align: center; }
+    .btn-download { padding: 6px 14px; background: #F5C518; color: #003B7A; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: none; }
     .btn-download:hover { background: #e6b800; }
-    .btn-close { background: none; border: none; color: rgba(255,255,255,0.7); font-size: 22px; cursor: pointer; }
+    .btn-close { background: none; border: none; color: rgba(255,255,255,0.7); font-size: 22px; cursor: pointer; line-height: 1; }
     .btn-close:hover { color: #fff; }
-    .pdf-frame { flex: 1; width: 100%; border: none; }
+    .pdf-container { flex: 1; overflow-y: auto; background: #525659; display: flex; flex-direction: column; align-items: center; padding: 16px 8px; gap: 10px; }
+    .pdf-page-wrap { box-shadow: 0 2px 12px rgba(0,0,0,0.5); }
+    .pdf-page-wrap canvas { display: block; max-width: 100%; }
+    .pdf-loading-msg { color: rgba(255,255,255,0.75); font-size: 14px; text-align: center; padding: 48px 24px; }
 
     /* Breadcrumb */
     .breadcrumb-wrap { max-width: 1000px; margin: 0 auto; padding: 16px 24px 0; }
@@ -280,7 +289,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
       <!-- BOTONES DE ACCIÓN: LEER EN LÍNEA Y DESCARGAR PDF -->
       <div class="article-actions">
         <?php if ($revista['pdf_url']): ?>
-          <button class="btn-leer" onclick="abrirPDF('<?= htmlspecialchars(str_starts_with($revista['pdf_url'], 'http') ? $revista['pdf_url'] : '../' . $revista['pdf_url']) ?>', '<?= addslashes(htmlspecialchars($revista['titulo'])) ?>')">
+          <button class="btn-leer" onclick="abrirPDF('ver_pdf.php?id=<?= $id ?>&lang=<?= $lang ?>', '<?= addslashes(htmlspecialchars($revista['titulo'])) ?>')">
             📖 <?= $lang === 'es' ? 'Leer revista' : 'Read magazine' ?>
           </button>
           <a class="btn-descargar" href="<?= htmlspecialchars(str_starts_with($revista['pdf_url'], 'http') ? $revista['pdf_url'] : '../' . $revista['pdf_url']) ?>" download>
@@ -335,15 +344,21 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
   <div class="pdf-topbar">
     <h3 id="pdfTitulo"></h3>
     <div class="pdf-actions">
+      <div class="pdf-nav">
+        <button class="pdf-nav-btn" id="btnPrev" onclick="cambiarPagina(-1)" disabled>&#8249;</button>
+        <span class="pdf-page-info" id="pageInfo">—</span>
+        <button class="pdf-nav-btn" id="btnNext" onclick="cambiarPagina(1)" disabled>&#8250;</button>
+      </div>
       <a id="btnDescargar" href="#" download class="btn-download">
         ⬇️ <?= $lang === 'es' ? 'Descargar' : 'Download' ?>
       </a>
       <button class="btn-close" onclick="cerrarPDF()">&#x2715;</button>
     </div>
   </div>
-  <iframe class="pdf-frame" id="pdfFrame" src=""></iframe>
+  <div class="pdf-container" id="pdfContainer"></div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 // ABRIR DRAWER (MENÚ LATERAL)
 function openDrawer() {
@@ -362,17 +377,101 @@ function toggleLang() {
   sub.classList.toggle('open');
   ch.style.transform = sub.classList.contains('open') ? 'rotate(180deg)' : '';
 }
-// ABRIR VISOR PDF
-function abrirPDF(pdf, titulo) {
+
+// PDF.js — configurar worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+var _pdf = null, _pdfCurrentPage = 1, _pdfTotalPages = 0, _pdfObserver = null, _pdfPageEls = [];
+
+// ABRIR VISOR PDF CON PDF.JS
+function abrirPDF(url, titulo) {
   document.getElementById('pdfTitulo').textContent = titulo;
-  document.getElementById('pdfFrame').src          = pdf;
-  document.getElementById('btnDescargar').href     = pdf;
+  document.getElementById('btnDescargar').href = url;
   document.getElementById('pdfOverlay').classList.add('open');
+
+  var container = document.getElementById('pdfContainer');
+  container.innerHTML = '<div class="pdf-loading-msg"><?= $lang === "es" ? "Cargando PDF…" : "Loading PDF…" ?></div>';
+  _pdfPageEls = []; _pdfCurrentPage = 1; _pdfTotalPages = 0;
+  document.getElementById('pageInfo').textContent = '—';
+  document.getElementById('btnPrev').disabled = true;
+  document.getElementById('btnNext').disabled = true;
+
+  if (_pdfObserver) { _pdfObserver.disconnect(); _pdfObserver = null; }
+  if (_pdf) { _pdf.destroy(); _pdf = null; }
+
+  pdfjsLib.getDocument(url).promise.then(function(pdf) {
+    _pdf = pdf;
+    _pdfTotalPages = pdf.numPages;
+    container.innerHTML = '';
+
+    var containerW = container.clientWidth - 24;
+    var scale = Math.min(1.5, Math.max(0.4, containerW / 595));
+
+    var chain = Promise.resolve();
+    for (var i = 1; i <= _pdfTotalPages; i++) {
+      (function(num) {
+        chain = chain.then(function() {
+          return pdf.getPage(num).then(function(page) {
+            var vp     = page.getViewport({ scale: scale });
+            var wrap   = document.createElement('div');
+            wrap.className = 'pdf-page-wrap';
+            wrap.id = 'pdf-page-' + num;
+            var canvas = document.createElement('canvas');
+            canvas.width  = vp.width;
+            canvas.height = vp.height;
+            wrap.appendChild(canvas);
+            container.appendChild(wrap);
+            _pdfPageEls.push(wrap);
+            return page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+          });
+        });
+      })(i);
+    }
+
+    chain.then(function() {
+      _pdfCurrentPage = 1;
+      _actualizarNav();
+      _pdfObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+          if (e.isIntersecting) {
+            _pdfCurrentPage = parseInt(e.target.id.replace('pdf-page-', ''), 10);
+            _actualizarNav();
+          }
+        });
+      }, { root: container, threshold: 0.4 });
+      _pdfPageEls.forEach(function(el) { _pdfObserver.observe(el); });
+    });
+
+  }).catch(function() {
+    container.innerHTML = '<div class="pdf-loading-msg"><?= $lang === "es" ? "Error al cargar el PDF." : "Error loading PDF." ?></div>';
+  });
 }
-// CERRAR VISOR PDF
+
+function _actualizarNav() {
+  document.getElementById('pageInfo').textContent = _pdfTotalPages > 0
+    ? ('<?= $lang === "es" ? "Página" : "Page" ?> ' + _pdfCurrentPage + ' <?= $lang === "es" ? "de" : "of" ?> ' + _pdfTotalPages)
+    : '—';
+  document.getElementById('btnPrev').disabled = _pdfCurrentPage <= 1;
+  document.getElementById('btnNext').disabled = _pdfCurrentPage >= _pdfTotalPages;
+}
+
+// NAVEGAR ENTRE PÁGINAS
+function cambiarPagina(dir) {
+  var t = _pdfCurrentPage + dir;
+  if (t < 1 || t > _pdfTotalPages) return;
+  _pdfCurrentPage = t;
+  var el = document.getElementById('pdf-page-' + _pdfCurrentPage);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  _actualizarNav();
+}
+
+// CERRAR VISOR PDF Y LIBERAR MEMORIA
 function cerrarPDF() {
   document.getElementById('pdfOverlay').classList.remove('open');
-  document.getElementById('pdfFrame').src = '';
+  if (_pdfObserver) { _pdfObserver.disconnect(); _pdfObserver = null; }
+  if (_pdf) { _pdf.destroy(); _pdf = null; }
+  document.getElementById('pdfContainer').innerHTML = '';
+  _pdfPageEls = []; _pdfCurrentPage = 1; _pdfTotalPages = 0;
 }
 </script>
 
