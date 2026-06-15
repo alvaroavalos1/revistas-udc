@@ -412,17 +412,21 @@ function abrirPDF(url, titulo) {
       (function(num) {
         chain = chain.then(function() {
           return pdf.getPage(num).then(function(page) {
-            var vp     = page.getViewport({ scale: scale });
-            var wrap   = document.createElement('div');
-            wrap.className = 'pdf-page-wrap';
-            wrap.id = 'pdf-page-' + num;
-            var canvas = document.createElement('canvas');
-            canvas.width  = vp.width;
-            canvas.height = vp.height;
+            var vp          = page.getViewport({ scale: scale });
+            var outputScale = window.devicePixelRatio || 1;
+            var wrap        = document.createElement('div');
+            wrap.className  = 'pdf-page-wrap';
+            wrap.id         = 'pdf-page-' + num;
+            var canvas      = document.createElement('canvas');
+            canvas.width    = Math.floor(vp.width  * outputScale);
+            canvas.height   = Math.floor(vp.height * outputScale);
+            canvas.style.width  = vp.width  + 'px';
+            canvas.style.height = vp.height + 'px';
+            var transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
             wrap.appendChild(canvas);
             container.appendChild(wrap);
             _pdfPageEls.push(wrap);
-            return page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+            return page.render({ canvasContext: canvas.getContext('2d'), transform: transform, viewport: vp }).promise;
           });
         });
       })(i);
