@@ -252,9 +252,10 @@ $iconos_cat = [
     .badge-visits i, .badge-new i { font-size: 11px; }
 
     /* Breadcrumb */
-    .breadcrumb { font-size: 13px; color: #aaa; margin-bottom: 16px; }
-    .breadcrumb a { color: #003B7A; text-decoration: none; }
-    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb { display: flex; align-items: center; gap: 8px; background: #EEF3FA; padding: 10px 16px; border-radius: 99px; width: fit-content; margin-bottom: 20px; }
+    .breadcrumb a { font-size: 13px; color: #003B7A; text-decoration: none; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+    .breadcrumb-sep { color: #003B7A; opacity: 0.4; font-size: 13px; }
+    .breadcrumb-current { font-size: 13px; color: #003B7A; opacity: 0.6; }
 
     /* Búsqueda */
     .search-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
@@ -398,8 +399,9 @@ $iconos_cat = [
   <?php elseif ($cat && $cat_actual): ?>
     <!-- VISTA DE CATEGORÍA: LISTA DE REVISTAS FILTRADAS -->
     <div class="breadcrumb">
-      <a href="?lang=<?= $lang ?>">&#8592; <?= $lang === 'es' ? 'Inicio' : 'Home' ?></a>
-      &nbsp;/&nbsp; <?= htmlspecialchars($lang === 'en' ? $cat_actual['nombre_en'] : $cat_actual['nombre_es']) ?>
+      <a href="?lang=<?= $lang ?>"><i class="ti ti-home" style="font-size:14px"></i><?= $lang === 'es' ? 'Inicio' : 'Home' ?></a>
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current"><?= htmlspecialchars($lang === 'en' ? $cat_actual['nombre_en'] : $cat_actual['nombre_es']) ?></span>
     </div>
     <div class="section-header">
       <div class="section-bar"></div>
