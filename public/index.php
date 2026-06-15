@@ -119,6 +119,12 @@ if ($cat) {
 } catch (\Throwable $e) { /* usa defaults vacíos declarados arriba */ }
 }
 
+// MAPA CATEGORIA_ID => NOMBRE PARA BÚSQUEDA EN VIVO (JS)
+$cat_map = [];
+foreach ($categorias as $c) {
+    $cat_map[$c['id']] = $lang === 'en' ? ($c['nombre_en'] ?? $c['nombre_es']) : $c['nombre_es'];
+}
+
 // MAPA DE ICONOS TABLER POR NOMBRE DE CATEGORÍA
 $iconos_cat = [
     'Ciencias de la Salud'                          => 'ti-stethoscope',
@@ -349,7 +355,7 @@ $iconos_cat = [
   <!-- FORMULARIO DE BÚSQUEDA EN EL HERO -->
   <form class="hero-search" method="GET" action="">
     <input type="hidden" name="lang" value="<?= $lang ?>">
-    <input type="text" name="q" placeholder="<?= $lang === 'es' ? 'Buscar revista...' : 'Search magazine...' ?>" value="<?= htmlspecialchars($busqueda) ?>">
+    <input type="text" id="heroSearch" name="q" placeholder="<?= $lang === 'es' ? 'Buscar revista...' : 'Search magazine...' ?>" value="<?= htmlspecialchars($busqueda) ?>" oninput="filtrarLive(this.value)" autocomplete="off">
     <button type="submit">&#128269;</button>
   </form>
   <!-- ESTADÍSTICAS GLOBALES DE LA PLATAFORMA -->
@@ -410,6 +416,7 @@ $iconos_cat = [
   <?php else: ?>
     <!-- VISTA INICIO: CATEGORÍAS + MÁS VISITADAS + RECIENTES -->
 
+    <div id="secCatGrid">
     <!-- GRID DE TARJETAS DE CATEGORÍAS -->
     <div class="section-header">
       <div class="section-bar"></div>
@@ -428,9 +435,10 @@ $iconos_cat = [
       </a>
       <?php endforeach; ?>
     </div>
+    </div>
 
     <!-- SECCIÓN: REVISTAS MÁS VISITADAS -->
-    <div class="section-wrap">
+    <div class="section-wrap" id="secVisitadas">
       <div class="section-header">
         <div class="section-bar"></div>
         <span class="section-title"> <?= $lang === 'es' ? 'Más visitadas' : 'Most visited' ?></span>
@@ -445,7 +453,7 @@ $iconos_cat = [
     </div>
 
     <!-- SECCIÓN: PUBLICACIONES RECIENTES -->
-    <div class="section-wrap">
+    <div class="section-wrap" id="secRecientes">
       <div class="section-header">
         <div class="section-bar"></div>
         <span class="section-title"> <?= $lang === 'es' ? 'Recientes' : 'Recent' ?></span>
@@ -458,6 +466,7 @@ $iconos_cat = [
         <div class="grid"><?php foreach ($recientes as $rev): echo tarjeta($rev, $lang, false); endforeach; ?></div>
       <?php endif; ?>
     </div>
+    <div class="empty" id="liveEmpty" style="display:none">🔍 <?= $lang === 'es' ? 'No se encontraron revistas.' : 'No journals found.' ?></div>
   <?php endif; ?>
 
 </div>
@@ -490,7 +499,7 @@ function tarjeta($rev, $lang, $mostrar_visitas = false) {
     $pdf    = htmlspecialchars($rev['pdf_url'] ?? '');
     $id     = $rev['revista_id'];
     ob_start(); ?>
-    <div class="card" onclick="window.location='revista.php?id=<?= $id ?>&lang=<?= $lang ?>'">
+    <div class="card" data-name="<?= $titulo ?>" data-cat="<?= (int)$rev['categoria_id'] ?>" onclick="window.location='revista.php?id=<?= $id ?>&lang=<?= $lang ?>'">
       <div class="card-img">
         <?php if (!empty($rev['portada_url'])): ?>
           <img src="<?= htmlspecialchars((str_starts_with($rev['portada_url'], 'http') || str_starts_with($rev['portada_url'], 'data:')) ? $rev['portada_url'] : '../' . $rev['portada_url']) ?>" alt="Portada" loading="lazy" onerror="this.outerHTML='<span style=\'font-size:42px\'>📄</span>'">
@@ -518,6 +527,41 @@ function tarjeta($rev, $lang, $mostrar_visitas = false) {
 ?>
 
 <script>
+// MAPA DE CATEGORÍAS PARA FILTRADO EN VIVO (PHP → JS)
+var CAT_MAP = <?= json_encode($cat_map) ?>;
+
+// FILTRADO EN VIVO DE TARJETAS MIENTRAS EL USUARIO ESCRIBE
+function filtrarLive(q) {
+  var term = q.trim().toLowerCase();
+  var cards = document.querySelectorAll('#secVisitadas .card, #secRecientes .card');
+  var total = 0;
+
+  cards.forEach(function(card) {
+    var name = (card.dataset.name || '').toLowerCase();
+    var cat  = (CAT_MAP[card.dataset.cat] || '').toLowerCase();
+    var show = !term || name.includes(term) || cat.includes(term);
+    card.style.display = show ? '' : 'none';
+    if (show) total++;
+  });
+
+  // Ocultar sección completa si ninguna tarjeta coincide
+  ['secVisitadas', 'secRecientes'].forEach(function(id) {
+    var sec = document.getElementById(id);
+    if (!sec) return;
+    var vis = 0;
+    sec.querySelectorAll('.card').forEach(function(c) { if (c.style.display !== 'none') vis++; });
+    sec.style.display = (term && vis === 0) ? 'none' : '';
+  });
+
+  // Ocultar grid de categorías mientras se filtra
+  var secCat = document.getElementById('secCatGrid');
+  if (secCat) secCat.style.display = term ? 'none' : '';
+
+  // Mensaje global de sin resultados
+  var empty = document.getElementById('liveEmpty');
+  if (empty) empty.style.display = (term && total === 0) ? 'block' : 'none';
+}
+
 // ABRIR DRAWER (MENÚ LATERAL)
 function openDrawer() {
   document.getElementById('drawer').classList.add('open');
