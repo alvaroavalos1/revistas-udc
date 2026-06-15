@@ -167,9 +167,11 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
     .pdf-frame { flex: 1; width: 100%; border: none; }
 
     /* Breadcrumb */
-    .breadcrumb { max-width: 1000px; margin: 0 auto; padding: 16px 24px 0; font-size: 13px; color: #aaa; }
-    .breadcrumb a { color: #003B7A; text-decoration: none; }
-    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb-wrap { max-width: 1000px; margin: 0 auto; padding: 16px 24px 0; }
+    .breadcrumb { display: flex; align-items: center; gap: 8px; background: #EEF3FA; padding: 10px 16px; border-radius: 99px; width: fit-content; margin-bottom: 20px; }
+    .breadcrumb a { font-size: 13px; color: #003B7A; text-decoration: none; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+    .breadcrumb-sep { color: #003B7A; opacity: 0.4; font-size: 13px; }
+    .breadcrumb-current { font-size: 13px; color: #003B7A; opacity: 0.6; }
 
     /* Footer */
     .footer { background: #003B7A; color: rgba(255,255,255,0.5); text-align: center; padding: 24px; font-size: 12px; margin-top: 40px; border-top: 3px solid #F5C518; }
@@ -236,12 +238,14 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
 </div>
 
 <!-- BREADCRUMB: RUTA DE NAVEGACIÓN -->
-<div class="breadcrumb">
-  <a href="index.php?lang=<?= $lang ?>">&#8592; <?= $lang === 'es' ? 'Inicio' : 'Home' ?></a>
-  &nbsp;/&nbsp;
-  <a href="index.php?lang=<?= $lang ?>&cat=<?= $revista['categoria_id'] ?>"><?= htmlspecialchars($revista['categoria']) ?></a>
-  &nbsp;/&nbsp;
-  <?= htmlspecialchars($revista['titulo']) ?>
+<div class="breadcrumb-wrap">
+  <div class="breadcrumb">
+    <a href="index.php?lang=<?= $lang ?>"><i class="ti ti-home" style="font-size:14px"></i><?= $lang === 'es' ? 'Inicio' : 'Home' ?></a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="index.php?lang=<?= $lang ?>&cat=<?= $revista['categoria_id'] ?>"><?= htmlspecialchars($revista['categoria']) ?></a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current"><?= htmlspecialchars($revista['titulo']) ?></span>
+  </div>
 </div>
 
 <!-- CONTENIDO PRINCIPAL: ARTÍCULO Y SIDEBAR -->
