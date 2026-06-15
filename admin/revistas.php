@@ -90,7 +90,7 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; background: #f4f6fa; display: flex; min-height: 100vh; }
-    .sidebar { width: 220px; background: #003B7A; display: flex; flex-direction: column; flex-shrink: 0; min-height: 100vh; }
+    .sidebar { width: 220px; background: #003B7A; display: flex; flex-direction: column; flex-shrink: 0; height: 100vh; position: fixed; top: 0; left: 0; overflow-y: auto; z-index: 200; }
     .sb-logo { padding: 22px 18px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
     .sb-logo-brand { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
     .sb-dot { width: 8px; height: 8px; border-radius: 50%; background: #F5C518; flex-shrink: 0; }
@@ -102,8 +102,8 @@ $con_ingles = $pdo->query('SELECT revista_id FROM revistas_en')->fetchAll(PDO::F
     .sb-link.active { background: rgba(245,197,24,0.12); color: #F5C518; border-left-color: #F5C518; }
     .sb-link i { font-size: 18px; }
     .sb-bottom { margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding: 10px 0; }
-    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-    .topbar { background: #fff; border-bottom: 3px solid #F5C518; padding: 0 24px; height: 54px; display: flex; align-items: center; justify-content: space-between; }
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; margin-left: 220px; }
+    .topbar { background: #fff; border-bottom: 3px solid #F5C518; padding: 0 24px; height: 54px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
     .topbar h1 { font-size: 16px; color: #003B7A; font-weight: 500; }
     .topbar-right { display: flex; align-items: center; gap: 12px; }
     .btn-preview { display: flex; align-items: center; gap: 6px; padding: 7px 14px; background: #EBF3FB; border: 1px solid #b8d4ef; border-radius: 8px; font-size: 12px; color: #003B7A; text-decoration: none; font-weight: 500; }
