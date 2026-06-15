@@ -149,7 +149,7 @@ $iconos_cat = [
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; background: #f4f6fa; min-height: 100vh; }
+    body { font-family: Arial, sans-serif; background: #f4f6fa; min-height: unset; }
 
     /* Topbar */
     .topbar { background: #003B7A; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
