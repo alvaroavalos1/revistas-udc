@@ -11,6 +11,7 @@ function url_asset(?string $path): string {
 
 function _r2_client(): ?\Aws\S3\S3Client {
     if (!class_exists('Aws\S3\S3Client')) return null;
+    if (!getenv('R2_ACCOUNT_ID') || !getenv('R2_ACCESS_KEY') || !getenv('R2_SECRET_KEY') || !getenv('R2_BUCKET')) return null;
     static $client = null;
     if (!$client) {
         $client = new \Aws\S3\S3Client([
