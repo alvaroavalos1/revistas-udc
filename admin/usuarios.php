@@ -122,7 +122,7 @@ $usuarios = $pdo->query('SELECT * FROM usuarios ORDER BY creado_en DESC')->fetch
   <a class="sb-link" href="revistas.php"><i class="ti ti-file-text" aria-hidden="true"></i> Revistas</a>
   <a class="sb-link" href="revistas_en.php"><i class="ti ti-world" aria-hidden="true"></i> Versión inglés</a>
   <a class="sb-link" href="categorias.php"><i class="ti ti-tag" aria-hidden="true"></i> Categorías</a>
-  <a class="sb-link" href="accesos.php"><i class="ti ti-shield" aria-hidden="true"></i> Registro IP</a>
+
   <a class="sb-link active" href="usuarios.php"><i class="ti ti-users" aria-hidden="true"></i> Usuarios</a>
   <div class="sb-bottom">
     <a class="sb-link" href="../public/logout.php"><i class="ti ti-logout" aria-hidden="true"></i> Cerrar sesión</a>

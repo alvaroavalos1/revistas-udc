@@ -193,7 +193,7 @@ $versiones = $pdo->query('
   <a class="sb-link active" href="revistas_en.php"><i class="ti ti-world" aria-hidden="true"></i> Versión inglés</a>
   <a class="sb-link" href="categorias.php"><i class="ti ti-tag" aria-hidden="true"></i> Categorías</a>
   <?php if ($_SESSION['rol'] === 'admin'): ?>
-  <a class="sb-link" href="accesos.php"><i class="ti ti-shield" aria-hidden="true"></i> Registro IP</a>
+
   <a class="sb-link" href="usuarios.php"><i class="ti ti-users" aria-hidden="true"></i> Usuarios</a>
   <?php endif; ?>
   <div class="sb-bottom">
