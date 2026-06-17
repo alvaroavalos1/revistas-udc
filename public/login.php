@@ -133,12 +133,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$bloqueado) {
       text-align: center;
     }
     .bloqueado strong { display: block; font-size: 15px; margin-bottom: 4px; }
-    .ip-badge {
-      display: inline-block;
-      background: #EBF3FB; color: #003B7A;
-      font-size: 11px; padding: 3px 10px;
-      border-radius: 20px; margin-top: 12px;
-    }
     .footer { margin-top: 20px; text-align: center; font-size: 11px; color: rgba(255,255,255,0.4); }
   </style>
 </head>
@@ -161,7 +155,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$bloqueado) {
         <strong>🔒 Acceso bloqueado</strong>
         Demasiados intentos fallidos desde tu IP.<br>
         Intenta de nuevo en 15 minutos.
-        <div class="ip-badge">IP: <?= htmlspecialchars($ip) ?></div>
       </div>
     <?php else: ?>
       <?php if ($error): ?>
@@ -176,9 +169,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$bloqueado) {
       </form>
     <?php endif; ?>
 
-    <div style="text-align:center; margin-top:16px;">
-      <span class="ip-badge">Tu IP: <?= htmlspecialchars($ip) ?></span>
-    </div>
   </div>
   <div class="footer">Universidad de Colima &nbsp;·&nbsp; Plataforma de Revistas</div>
 </body>
