@@ -276,7 +276,7 @@ $categorias = $pdo->query('SELECT * FROM categorias WHERE activa = 1 ORDER BY no
       <!-- METADATOS: CATEGORÍA, AUTOR Y FECHA DE PUBLICACIÓN -->
       <div class="article-meta">
         <span class="meta-cat"><?= htmlspecialchars($revista['categoria']) ?></span>
-        <span class="meta-autor">👤 <?= htmlspecialchars($revista['autor']) ?></span>
+        <span class="meta-autor"> <?= htmlspecialchars($revista['autor']) ?></span>
         <?php if ($revista['publicada_en']): ?>
           <span class="meta-fecha">📅 <?= date('d/m/Y', strtotime($revista['publicada_en'])) ?></span>
         <?php endif; ?>
